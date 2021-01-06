@@ -151,6 +151,8 @@ def find_case():
     per_page = data.get('sizePage') if data.get('sizePage') else 10
     if not project_id:
         return jsonify({'msg': '请选择项目', 'status': 0})
+    if not set_id:
+        return jsonify({'msg': '请先在当前项目下创建模块', 'status': 0})
     if case_name:
         _data = Case.query.filter_by(case_set_id=set_id).filter(Case.name.like('%{}%'.format(case_name)))
         if not _data:

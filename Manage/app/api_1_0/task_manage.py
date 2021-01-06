@@ -11,17 +11,23 @@ from ..util.report.report import render_html_report
 from flask_login import current_user
 
 
-def aps_test(project_id, case_ids, send_address=None, send_password=None, task_to_address=None, performer='无'):
+def aps_test(project_id, case_ids, send_address=None, send_password=None, task_to_address=None, performer='无',
+             new_add_args=None):
     # global db
     # db.session.remove()
     # db.create_scoped_session()
+    environment = new_add_args['environment']
+    url_index = new_add_args['url_index']
+    task_name = new_add_args['task_name']
+    flag = new_add_args['flag']
+
     d = RunCase(project_id)
-    d.get_case_test(case_ids)
+    d.get_case_test(case_ids, environment, url_index)
     jump_res = d.run_case()
     res = json.loads(jump_res)
 
-    if res["success"] is False:
-        d.build_report(jump_res, case_ids, performer)
+    if flag == 's' or res["success"] is False or res["success"] == 'False':
+        d.build_report(jump_res, task_name, performer)
 
         if send_address:
             task_to_address = task_to_address.split(',')
@@ -50,7 +56,7 @@ def get_case_id(pro_id, set_id, case_id):
     return case_ids
 
 
-@api.route('/task/run', methods=['POST'])
+@api.route('/task/run', methods=['GET', 'POST'])
 @login_required
 def run_task():
     """ 单次运行任务 """
@@ -58,13 +64,16 @@ def run_task():
     ids = data.get('id')
     _data = Task.query.filter_by(id=ids).first()
     cases_id = get_case_id(_data.project_id, json.loads(_data.set_id), json.loads(_data.case_id))
+    new_add_args = {'environment': _data.environment, 'url_index': _data.url_index, 'task_name': _data.task_name,
+                    'flag': 's'}
     new_report_id = aps_test(_data.project_id, cases_id,
-                             performer=User.query.filter_by(id=current_user.id).first().name)
+                             performer=User.query.filter_by(id=current_user.id).first().name,
+                             new_add_args=new_add_args)
 
     return jsonify({'msg': '测试成功', 'status': 1, 'data': {'report_id': new_report_id}})
 
 
-@api.route('/task/start', methods=['POST'])
+@api.route('/task/start', methods=['GET', 'POST'])
 @login_required
 def start_task():
     """ 任务开启 """
@@ -73,9 +82,12 @@ def start_task():
     _data = Task.query.filter_by(id=ids).first()
     config_time = change_cron(_data.task_config_time)
     cases_id = get_case_id(_data.project_id, json.loads(_data.set_id), json.loads(_data.case_id))
+    new_add_args = {'environment': _data.environment, 'url_index': _data.url_index, 'task_name': _data.task_name,
+                    'flag': 'c'}
     scheduler.add_job(func=aps_test, trigger='cron', misfire_grace_time=60, coalesce=False,
                       args=[_data.project_id, cases_id, _data.task_send_email_address, _data.email_password,
-                            _data.task_to_email_address, User.query.filter_by(id=current_user.id).first().name],
+                            _data.task_to_email_address, User.query.filter_by(id=current_user.id).first().name,
+                            new_add_args],
                       id=str(ids), **config_time)  # 添加任务
     _data.status = '启动'
     db.session.commit()
@@ -100,6 +112,10 @@ def add_task():
     to_email = data.get('toEmail')
     send_email = data.get('sendEmail')
     password = data.get('password')
+    url_index = data.get('url_index')
+    status_url = data.get('status_url')
+    environment = data.get('environment')
+
     # 0 0 1 * * *
     if not (not to_email and not send_email and not password) and not (to_email and send_email and password):
         return jsonify({'msg': '发件人、收件人、密码3个必须都为空，或者都必须有值', 'status': 0})
@@ -122,6 +138,10 @@ def add_task():
             old_task_data.task_send_email_address = send_email
             old_task_data.email_password = password
             old_task_data.num = num
+            old_task_data.url_index = url_index
+            old_task_data.status_url = status_url
+            old_task_data.environment = environment
+
             if old_task_data.status != '创建' and old_task_data.task_config_time != time_config:
                 scheduler.reschedule_job(str(task_id), trigger='cron', **change_cron(time_config))  # 修改任务
                 old_task_data.status = '启动'
@@ -143,7 +163,10 @@ def add_task():
                             task_to_email_address=to_email,
                             task_send_email_address=send_email,
                             task_config_time=time_config,
-                            num=num)
+                            num=num,
+                            url_index=url_index,
+                            status_url=status_url,
+                            environment=environment)
             db.session.add(new_task)
             db.session.commit()
             return jsonify({'msg': '新建成功', 'status': 1})
@@ -159,7 +182,7 @@ def edit_task():
     _data = {'num': c.num, 'task_name': c.task_name, 'task_config_time': c.task_config_time, 'task_type': c.task_type,
              'set_ids': json.loads(c.set_id), 'case_ids': json.loads(c.case_id),
              'task_to_email_address': c.task_to_email_address, 'task_send_email_address': c.task_send_email_address,
-             'password': c.email_password}
+             'password': c.email_password, 'environment': c.environment, 'url_index': c.url_index}
 
     return jsonify({'data': _data, 'status': 1})
 

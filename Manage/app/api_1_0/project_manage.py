@@ -62,7 +62,7 @@ def get_pro_gather():
             pro_url[p.id] = json.loads(p.host_four)
 
         pro_base_url[p.id] = [json.loads(p.host), json.loads(p.host_two), json.loads(p.host_three),
-                              json.loads(p.host_four)]
+                              json.loads(p.host_four), json.loads(p.host_five), json.loads(p.host_six)]
     if my_pros:
         # my_pros = {'pro_name': my_pros.name, 'pro_id': my_pros.id, 'model_list': pro[my_pros.name]}
         user_pros = True
@@ -108,6 +108,7 @@ def find_project():
                  'choice': c.environment_choice,
                  'principal': User.query.filter_by(id=c.user_id).first().name,
                  'host_two': c.host_two, 'host_three': c.host_three, 'host_four': c.host_four,
+                 'host_five': c.host_five, 'host_six': c.host_six,
                  'team_names': ','.join([user.name for user in c.users]),
                  'edit_view': (current_user.role_id == 2 or current_user.id == c.user_id)} for
                 c in items]
@@ -131,6 +132,8 @@ def add_project():
     host_two = json.dumps(data.get('hostTwo'))
     host_three = json.dumps(data.get('hostThree'))
     host_four = json.dumps(data.get('hostFour'))
+    host_five = json.dumps(data.get('hostFive'))
+    host_six = json.dumps(data.get('hostSix'))
     ids = data.get('id')
     header = data.get('header')
     variable = data.get('variable')
@@ -149,6 +152,8 @@ def add_project():
             old_project_data.host_two = host_two
             old_project_data.host_three = host_three
             old_project_data.host_four = host_four
+            old_project_data.host_five = host_five
+            old_project_data.host_six = host_six
             old_project_data.headers = header
             old_project_data.variables = variable
             old_project_data.func_file = func_file
@@ -166,7 +171,8 @@ def add_project():
                                   user_id=user_id,
                                   func_file=func_file,
                                   environment_choice=environment_choice,
-                                  host_three=host_three, host_four=host_four, headers=header, variables=variable)
+                                  host_three=host_three, host_four=host_four,
+                                  host_five=host_five, host_six=host_six, headers=header, variables=variable)
             db.session.add(new_project)
             new_project.users = User.query.filter(User.id.in_(set(team_ids))).all()
             db.session.commit()
@@ -207,6 +213,8 @@ def edit_project():
              'host_two': json.loads(_edit.host_two),
              'host_three': json.loads(_edit.host_three),
              'host_four': json.loads(_edit.host_four),
+             'host_five': json.loads(_edit.host_five),
+             'host_six': json.loads(_edit.host_six),
              'headers': json.loads(_edit.headers),
              'environment_choice': _edit.environment_choice,
              'variables': json.loads(_edit.variables), 'team_ids': [user.id for user in _edit.users]}

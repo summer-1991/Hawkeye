@@ -156,6 +156,9 @@
                 else if (path === '/manage/wikiManage') {
                     this.title = ['其他程序', '文档库']
                 }
+                else if (path === '/manage/ganttModel') {
+                    this.title = ['其他程序', '甘特图']
+                }
                 else if (path === '/manage/batch') {
                     this.title = ['其他程序', '批量操作']
                 }

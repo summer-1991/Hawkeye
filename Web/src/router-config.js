@@ -21,6 +21,7 @@ import sysManage from './components/projectView/sysManage/client.vue'
 import wikiManage from './components/wiki/wiki.vue'
 import manualSet from './components/projectView/manualManage/manualSet.vue'
 import manualTask from './components/projectView/manualManage/manualTask.vue'
+import ganttModel from './components/gantt/gantt.vue'
 
 //import testCaseEditor from './components/testCaseEdit/editor.vue'
 import login from './components/login/login.vue'
@@ -148,6 +149,17 @@ const routes = [
                 components: {
                     Header: Header,
                     Manage: wikiManage,
+                }
+            },
+            {
+                path:'ganttModel',
+                meta: {
+                    title: '甘特图',
+                    requireAuth: true,
+                },
+                components: {
+                    Header: Header,
+                    Manage: ganttModel,
                 }
             },
             {

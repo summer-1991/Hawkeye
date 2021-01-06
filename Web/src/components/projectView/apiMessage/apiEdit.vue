@@ -475,7 +475,7 @@
                     validate: Array(),
                     sig: '',
                 },
-                environmentList: ['测试环境', '开发环境', '预发环境', '线上环境'],
+                environmentList: ['测试环境', '开发环境', '预发环境', '线上环境','GM测试','GM正式'],
                 sigList: ['clientid_时间戳_md5'],
                 curernturlData: Array(),
             }

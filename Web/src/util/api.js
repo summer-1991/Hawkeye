@@ -100,6 +100,10 @@ const runManualCaseApi = '/api/manual/runTaskCase';
 const importCaseFile = '/api/manual/importCase';
 const importManualCaseApi = '/api/manual/doImport';
 
+const findGanttTask = '/api/gantt/find';
+const updateGanttTask = '/api/gantt/update';
+const delGanttTask = '/api/gantt/del';
+
 export default {
     addTestCaseFileApi,
     findTestCaseFileApi,
@@ -201,4 +205,8 @@ export default {
     runManualCaseApi,
     importCaseFile,
     importManualCaseApi,
+
+    findGanttTask,
+    updateGanttTask,
+    delGanttTask,
 }

@@ -89,7 +89,8 @@
                                     <el-tag size="small"
                                             :type="caseTableData[scope.$index]['last_res'] === 0 ?
                                     'info' : caseTableData[scope.$index]['last_res'] === 1 ?
-                                     'success' :  caseTableData[scope.$index]['last_res'] === 2 ? 'warning' : 'danger'">
+                                     'success' :  caseTableData[scope.$index]['last_res'] === 2 ?
+                                     'warning' : caseTableData[scope.$index]['last_res'] === 3 ? 'danger':'primary'">
                                         {{resultShow(caseTableData[scope.$index]['last_res'])}}
                                     </el-tag>
                                 </template>
@@ -368,7 +369,7 @@
                     caseType: '',
                 },
                 caseTypeList: ['最高', '较高', '一般', '较低', '最低'],
-                resultList: ['未执行', '成功', '失败', '阻塞'],
+                resultList: ['未执行', '成功', '失败', '阻塞','N/A'],
                 features: 'ManualTask',
             }
         },

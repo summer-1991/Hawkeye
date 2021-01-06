@@ -107,6 +107,8 @@ class Project(db.Model):
     host_two = db.Column(db.String(1024), comment='开发环境')
     host_three = db.Column(db.String(1024), comment='线上环境')
     host_four = db.Column(db.String(1024), comment='备用环境')
+    host_five = db.Column(db.String(1024), comment='gm测试环境')
+    host_six = db.Column(db.String(1024), comment='gm正式环境')
     environment_choice = db.Column(db.String(16), comment='环境选择，first为测试，以此类推')
     principal = db.Column(db.String(16), nullable=True)
     variables = db.Column(db.String(2048), comment='项目的公共变量')
@@ -249,6 +251,9 @@ class Task(db.Model):
     email_password = db.Column(db.String(256), comment='发件人邮箱密码')
     status = db.Column(db.String(16), default=u'创建', comment='任务的运行状态，默认是创建')
     project_id = db.Column(db.String(16), nullable=True)
+    environment = db.Column(db.Integer(), comment='环境类型')
+    url_index = db.Column(db.Integer(), comment='选择的url的index')
+    status_url = db.Column(db.String(100), comment='基础url')
     created_time = db.Column(db.DateTime(), default=datetime.now, comment='任务的创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
 
@@ -351,6 +356,31 @@ class CommonConfig(db.Model):
     c_key = db.Column(db.String(20), comment='一般为key，如服务id')
     c_value = db.Column(db.String(100), comment='一般为value，如服务密钥')
     desc = db.Column(db.String(200), comment='备注')
+
+    created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
+    update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
+
+
+class GanttData(db.Model):
+    __tablename__ = 'gantt_data'
+    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
+    text = db.Column(db.String(50), comment='任务名称')
+    start_date = db.Column(db.String(30), comment='开始时间')
+    duration = db.Column(db.Integer(), comment='持续时间')
+    end_date = db.Column(db.String(30), comment='结束时间')
+    progress = db.Column(db.Integer(), comment='执行百分比')
+    parent = db.Column(db.Integer(), comment='甘特父id')
+
+    created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
+    update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
+
+
+class GanttLink(db.Model):
+    __tablename__ = 'gantt_link'
+    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
+    source = db.Column(db.Integer(), comment='上一节点id')
+    target = db.Column(db.Integer(), comment='下一节点id')
+    type = db.Column(db.String(1), comment='样式')
 
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)

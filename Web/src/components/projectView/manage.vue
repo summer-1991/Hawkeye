@@ -53,9 +53,6 @@
                             <el-menu-item-group>
                                 <el-menu-item index="/manage/manualSet">功能用例</el-menu-item>
                                 <el-menu-item index="/manage/manualTask">测试任务</el-menu-item>
-                                <el-menu-item>
-                                    <div @click.prevent="goToEditTestCaseFile">脑图</div>
-                                </el-menu-item>
                             </el-menu-item-group>
                         </el-submenu>
                         <el-submenu index="3">
@@ -79,6 +76,10 @@
                             <el-menu-item-group>
                                 <!--<el-menu-item index="/manage/testTool">小工具</el-menu-item>-->
                                 <el-menu-item index="/manage/wikiManage">文档库</el-menu-item>
+                                <el-menu-item index="/manage/ganttModel">甘特图</el-menu-item>
+                                <el-menu-item>
+                                    <div @click.prevent="goToEditTestCaseFile">脑图</div>
+                                </el-menu-item>
                             </el-menu-item-group>
                         </el-submenu>
 

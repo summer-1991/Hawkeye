@@ -206,6 +206,42 @@
                                 </el-table-column>
                             </el-table>
                         </el-tab-pane>
+                        <el-tab-pane label="GM测试" name="fifth">
+                            <el-table :data="environment.gmTest" size="mini" stripe :show-header="false">
+                                <el-table-column property="value" label="Value" header-align="center" minWidth="200">
+                                    <template slot-scope="scope">
+                                        <el-input v-model="scope.row.value" size="mini"
+                                                  placeholder="http://127.0.0.1:8010">
+                                        </el-input>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column property="value" label="操作" header-align="center" width="50">
+                                    <template slot-scope="scope">
+                                        <el-button type="danger" icon="el-icon-delete" size="mini"
+                                                   @click.native="delTableRow('gmtest',scope.$index)">
+                                        </el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </el-tab-pane>
+                        <el-tab-pane label="GM正式" name="sixth">
+                            <el-table :data="environment.gmStandby" size="mini" stripe :show-header="false">
+                                <el-table-column property="value" label="Value" header-align="center" minWidth="200">
+                                    <template slot-scope="scope">
+                                        <el-input v-model="scope.row.value" size="mini"
+                                                  placeholder="http://127.0.0.1:8010">
+                                        </el-input>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column property="value" label="操作" header-align="center" width="50">
+                                    <template slot-scope="scope">
+                                        <el-button type="danger" icon="el-icon-delete" size="mini"
+                                                   @click.native="delTableRow('gmstandby',scope.$index)">
+                                        </el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                        </el-tab-pane>
                     </el-tabs>
                 </el-tab-pane>
 
@@ -298,6 +334,8 @@
                     environmentDevelop: [{value: ''}],
                     environmentProduction: [{value: ''}],
                     environmentStandby: [{value: ''}],
+                    gmTest: [{value: ''}],
+                    gmStandby: [{value: ''}],
                 },
                 tableData: Array(),
                 total: 1,
@@ -368,6 +406,8 @@
                 this.environment.environmentDevelop = Array();
                 this.environment.environmentProduction = Array();
                 this.environment.environmentStandby = Array();
+                this.environment.gmTets = Array();
+                this.environment.gmStandby = Array();
                 this.form.user = {};
                 this.form.team_ids = Array();
                 this.projectData.principal = null;
@@ -427,11 +467,13 @@
                     'projectName': this.projectData.projectName,
                     'principal': this.projectData.principal,
                     'funcFile': this.projectData.funcFile,
-                    'environmentChoice': this.environmentChoice,
+                    'environmentChoice': 'first',
                     'host': this.dealHostList(this.environment.environmentTest),
                     'hostTwo': this.dealHostList(this.environment.environmentDevelop),
                     'hostThree': this.dealHostList(this.environment.environmentProduction),
                     'hostFour': this.dealHostList(this.environment.environmentStandby),
+                    'hostFive': this.dealHostList(this.environment.gmTest),
+                    'hostSix': this.dealHostList(this.environment.gmStandby),
                     'id': this.projectData.id,
                     'header': JSON.stringify(this.projectData.header),
                     'userId': this.form.user.user_id,
@@ -457,6 +499,8 @@
                         this.environment.environmentDevelop = this.dealHostDict(response.data['data']['host_two']);
                         this.environment.environmentProduction = this.dealHostDict(response.data['data']['host_three']);
                         this.environment.environmentStandby = this.dealHostDict(response.data['data']['host_four']);
+                        this.environment.gmTest = this.dealHostDict(response.data['data']['host_five']);
+                        this.environment.gmStandby = this.dealHostDict(response.data['data']['host_six']);
                         this.projectData.header = response.data['data']['headers'];
                         this.projectData.variable = response.data['data']['variables'];
                         this.projectData.id = id;
@@ -514,6 +558,10 @@
                         this.environment.environmentProduction.splice(i, 1);
                     } else if (type === 'standby') {
                         this.environment.environmentStandby.splice(i, 1);
+                    } else if (type === 'gmtest') {
+                        this.environment.gmTest.splice(i, 1);
+                    } else if (type === 'gmstandby') {
+                        this.environment.gmStandby.splice(i, 1);
                     }
                 }).catch(() => {
                 });
@@ -527,6 +575,10 @@
                     this.environment.environmentProduction.push({value: ''});
                 } else if (type === 'standby') {
                     this.environment.environmentStandby.push({value: ''});
+                } else if (type === 'gmtest') {
+                    this.environment.gmTest.push({value: ''});
+                } else if (type === 'gmstandby') {
+                    this.environment.gmStandby.push({value: ''});
                 }
             },
         },
@@ -542,6 +594,12 @@
             },
             monitorEnvironmentStandby() {
                 return this.environment.environmentStandby;
+            },
+            monitorGmTest() {
+                return this.environment.gmTest;
+            },
+            monitorGmStandby() {
+                return this.environment.gmStandby;
             },
         },
         watch: {
@@ -585,6 +643,28 @@
                     }
                     if (this.environment.environmentStandby[this.environment.environmentStandby.length - 1]['value']) {
                         this.addTableRow('standby')
+                    }
+                },
+                deep: true
+            },
+            monitorGmTest: {
+                handler: function () {
+                    if (this.environment.gmTest.length === 0) {
+                        this.addTableRow('gmtest')
+                    }
+                    if (this.environment.gmTest[this.environment.gmTest.length - 1]['value']) {
+                        this.addTableRow('gmtest')
+                    }
+                },
+                deep: true
+            },
+            monitorGmStandby: {
+                handler: function () {
+                    if (this.environment.gmStandby.length === 0) {
+                        this.addTableRow('gmstandby')
+                    }
+                    if (this.environment.gmStandby[this.environment.gmStandby.length - 1]['value']) {
+                        this.addTableRow('gmstandby')
                     }
                 },
                 deep: true

@@ -151,6 +151,29 @@
                             </el-select>
 
                         </el-form-item>
+                        <el-form-item label="执行环境" :label-width="taskData.formLabelWidth">
+                            <el-select v-model="taskData.environment" clearable value-key="envId" placeholder="执行环境"
+                                       style="width: 150px;padding-right:5px"
+                                       @change="changeEnvChoice">
+                                <el-option
+                                        v-for="item in environmentList"
+                                        :key="item"
+                                        :value="item">
+                                </el-option>
+                            </el-select>
+
+                            <el-select v-model="taskData.choiceUrl"
+                                       clearable placeholder="请选择url"
+                                       style="width: 150px;padding-right:5px">
+                                <el-option
+                                        v-for="item in currentUrlData"
+                                        :key="item"
+                                        :label="item"
+                                        :value="item"
+                                >
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
                         <el-form-item label="任务名称" :label-width="taskData.formLabelWidth">
                             <el-input v-model="taskData.name" auto-complete="off">
                             </el-input>
@@ -232,7 +255,12 @@
                     timeConfig: '',
                     password: '',
                     formLabelWidth: '90px',
-                }
+                    environment: '',
+                    choiceUrl: '',
+                },
+                environmentList: ['测试环境', '开发环境', '预发环境', '线上环境'],
+                currentUrlData: Array(),
+                baseUrlData: Array()
             }
         },
 
@@ -243,6 +271,7 @@
                         this.proAndIdData = response.data['pro_and_id'];
                         this.allSetList = response.data['set_list'];
                         this.allSceneList = response.data['scene_list'];
+                        this.baseUrlData = response.data['baseUrlData'];
                         if (response.data['user_pros']) {
                             this.form.projectId = this.proAndIdData[0].id;
                             this.findTask();
@@ -255,7 +284,15 @@
             changeProjectChoice() {
                 this.form.set = [];
                 this.form.case = [];
-
+                this.changeEnvChoice();
+            },
+            changeEnvChoice() {
+                this.currentUrlData = Array();
+                this.taskData.choiceUrl = '';
+                let index = this.environmentList.indexOf(this.taskData.environment);
+                if (index != -1) {
+                    this.currentUrlData = this.baseUrlData[this.form.projectId][index];
+                }
             },
             changeSceneChoice() {
                 if (this.form.set.length === 1) {
@@ -305,13 +342,25 @@
                 this.taskData.SendEmail = '';
                 this.taskData.timeConfig = '';
                 this.taskData.password = '';
+                this.taskData.environment = '';
+                this.taskData.choiceUrl = '';
                 this.form.set = [];
                 this.form.case = [];
+                this.currentUrlData = [];
                 this.taskData.num = '';
                 this.taskData.modelFormVisible = true;
 
             },
             addTask() {
+                if(this.taskData.environment != '' && this.taskData.choiceUrl == ''){
+                    this.$message({
+                        showClose: true,
+                        message: '选择了环境必须选择url',
+                        type: 'warning',
+                    });
+                    return
+                }
+
                 this.$axios.post(this.$api.addTaskApi, {
                     'projectId': this.form.projectId,
                     'setIds': this.form.set,
@@ -324,6 +373,9 @@
                     'sendEmail': this.taskData.SendEmail,
                     'timeConfig': this.taskData.timeConfig,
                     'password': this.taskData.password,
+                    'url_index': this.currentUrlData.indexOf(this.taskData.choiceUrl),
+                    'status_url': this.taskData.choiceUrl,
+                    'environment': this.environmentList.indexOf(this.taskData.environment),
                 }).then((response) => {
 
                         if (response.data['status'] === 0) {
@@ -367,6 +419,10 @@
                         }
                         this.form.case = response.data['data']['case_ids'];
                         this.taskData.modelFormVisible = true;
+
+                        this.taskData.environment = this.environmentList[response.data['data']['environment']];
+                        this.changeEnvChoice();
+                        this.taskData.choiceUrl = this.currentUrlData[response.data['data']['url_index']];
                     }
                 )
             },

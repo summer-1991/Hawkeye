@@ -28,7 +28,7 @@ def run_cases():
 
     if data.get('reportStatus'):
         performer = User.query.filter_by(id=current_user.id).first().name
-        d.build_report(jump_res, case_ids, performer)
+        d.build_report(jump_res, '批量跑业务用例', performer)
     res = json.loads(jump_res)
 
     return jsonify({'msg': '测试完成', 'status': 1, 'data': {'report_id': d.new_report_id, 'data': res}})

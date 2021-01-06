@@ -82,7 +82,7 @@
                                    size="small"
                                    style="width: 150px;padding-right:5px">
                             <el-option
-                                    v-for="item in curernturlData"
+                                    v-for="item in currentUrlData"
                                     :key="item"
                                     :label="item"
                                     :value="item"
@@ -458,7 +458,7 @@
                 },
                 configShow: false,
                 environmentList: ['测试环境', '开发环境', '预发环境', '线上环境'],
-                curernturlData: Array(),
+                currentUrlData: Array(),
             }
         },
         methods: {
@@ -557,7 +557,7 @@
                 this.caseData.setId = this.currentSetId;
                 this.caseData.modelFormVisible = true;
                 this.caseData.projectId = this.projectId;
-                this.curernturlData = Array();
+                this.currentUrlData = Array();
                 this.apiMsgVessel = [];
                 this.findApiMsg();
             },
@@ -587,11 +587,11 @@
                         }
                         this.caseData.modelFormVisible = true;
                         this.caseData.environment = this.environmentList[response.data['data']['environment']];
-                        this.curernturlData = Array();
+                        this.currentUrlData = Array();
                         if (response.data['data']['environment'] != -1) {
-                            this.curernturlData = this.baseUrlData[this.projectId][response.data['data']['environment']];
+                            this.currentUrlData = this.baseUrlData[this.projectId][response.data['data']['environment']];
                         }
-                        this.form.choiceUrl = this.curernturlData[response.data['data']['status_url']];
+                        this.form.choiceUrl = this.currentUrlData[response.data['data']['status_url']];
                     }
                 )
             },
@@ -604,17 +604,17 @@
                 }
 
                 this.form.choiceUrl = '';
-                var index = this.environmentList.indexOf(this.caseData.environment);
+                let index = this.environmentList.indexOf(this.caseData.environment);
                 if (index != -1) {
-                    this.curernturlData = this.baseUrlData[this.caseData.projectId][index];
+                    this.currentUrlData = this.baseUrlData[this.caseData.projectId][index];
                 }
             },
             changeEnvChoice() {
-                this.curernturlData = Array();
+                this.currentUrlData = Array();
                 this.form.choiceUrl = '';
-                var index = this.environmentList.indexOf(this.caseData.environment);
+                let index = this.environmentList.indexOf(this.caseData.environment);
                 if (index != -1) {
-                    this.curernturlData = this.baseUrlData[this.caseData.projectId][index];
+                    this.currentUrlData = this.baseUrlData[this.caseData.projectId][index];
                 }
             },
             changeModuleChoice() {
@@ -801,7 +801,7 @@
                     'times': this.caseData.times,
                     'caseSetId': this.caseData.setId,
                     'desc': this.caseData.desc,
-                    'status_url': this.curernturlData.indexOf(this.form.choiceUrl),
+                    'status_url': this.currentUrlData.indexOf(this.form.choiceUrl),
                     'environment': this.environmentList.indexOf(this.caseData.environment),
                     'funcAddress': this.caseData.funcAddress,
                     'variable': JSON.stringify(this.caseData.variable),

@@ -281,6 +281,7 @@
             },
             initProjectChoice() {
                 //  当项目选择项改变时，初始化模块和配置的数据
+                this.setTempData={name: null, setId: null,};
                 this.setPage.currentPage = 1;
                 this.casePage.currentPage = 1;
                 this.findSet()

@@ -21,7 +21,7 @@
             </el-form-item>
             <el-form-item prop="case_type" style="margin-bottom: 5px" label="用例类型">
                 <el-select v-model="caseData.case_type"
-                           placeholder="请选择测试集"
+                           placeholder="请选择类型"
                            size="small"
                            style="width: 200px;padding-right:10px">
                     <el-option
@@ -31,18 +31,18 @@
                     </el-option>
                 </el-select>
             </el-form-item>
-            <el-form-item label="文档编号"
-                          label-width="80px"
-                          prop="id"
-                          v-if="caseData.id"
-                          style="margin-bottom: 5px">
+            <!--<el-form-item label="文档编号"-->
+                          <!--label-width="80px"-->
+                          <!--prop="id"-->
+                          <!--v-if="caseData.id"-->
+                          <!--style="margin-bottom: 5px">-->
 
-                <el-input v-model.number="caseData.id"
-                          placeholder="文档编号"
-                          size="small"
-                          style="width: 70px;text-align:center;">
-                </el-input>
-            </el-form-item>
+                <!--<el-input v-model.number="caseData.id"-->
+                          <!--placeholder="文档编号"-->
+                          <!--size="small"-->
+                          <!--style="width: 70px;text-align:center;">-->
+                <!--</el-input>-->
+            <!--</el-form-item>-->
         </el-form>
         <el-form :inline="true" style="padding: 10px 20px -10px 10px;">
             <el-form-item prop="desc" style="margin-bottom: 5px" label="用例描述">
