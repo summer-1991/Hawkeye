@@ -129,44 +129,26 @@
                 if (path === '/manage/projectManage') {
                     this.title = ['接口测试', '项目管理']
                 }
-                else if (path === '/manage/caseManage') {
-                    this.title = ['接口测试', 'API用例']
+                else if (path === '/manage/sdkManage') {
+                    this.title = ['接口测试', 'SDK配置']
                 }
                 else if (path === '/manage/sceneConfig') {
-                    this.title = ['接口测试', '内置函数']
-                }
-                else if (path === '/manage/sceneManage') {
-                    this.title = ['接口测试', '业务用例']
+                    this.title = ['接口测试', '项目函数']
                 }
                 else if (path === '/manage/buildInFunc') {
                     this.title = ['接口测试', '函数文件']
                 }
+                else if (path === '/manage/caseManage') {
+                    this.title = ['接口测试', 'API用例']
+                }
+                else if (path === '/manage/sceneManage') {
+                    this.title = ['接口测试', '业务用例']
+                }
                 else if (path === '/manage/reportManage') {
-                    this.title = ['报告管理', '接口报告']
+                    this.title = ['接口测试', '测试报告']
                 }
                 else if (path === '/manage/taskManage') {
-                    this.title = ['报告管理', '定时任务']
-                }
-                else if (path === '/manage/userManage') {
-                    this.title = ['系统管理', '用户&权限']
-                }
-                else if (path === '/manage/testTool') {
-                    this.title = ['其他程序', '测试小工具']
-                }
-                else if (path === '/manage/wikiManage') {
-                    this.title = ['其他程序', '文档库']
-                }
-                else if (path === '/manage/ganttModel') {
-                    this.title = ['其他程序', '甘特图']
-                }
-                else if (path === '/manage/batch') {
-                    this.title = ['其他程序', '批量操作']
-                }
-                else if (path === '/manage/sqlCheck') {
-                    this.title = ['其他程序', '数据库查询']
-                }
-                else if (path === '/manage/sysManage') {
-                    this.title = ['系统管理', '后台配置']
+                    this.title = ['接口测试', '定时任务']
                 }
                 else if (path === '/manage/manualSet') {
                     this.title = ['功能测试', '功能用例']
@@ -174,7 +156,18 @@
                 else if (path === '/manage/manualTask') {
                     this.title = ['功能测试', '测试任务']
                 }
-
+                else if (path === '/manage/wikiManage') {
+                    this.title = ['其他程序', '文档库']
+                }
+                else if (path === '/manage/ganttModel') {
+                    this.title = ['其他程序', '甘特图']
+                }
+                else if (path === '/manage/testResource') {
+                    this.title = ['其他程序', '测试资源']
+                }
+                else if (path === '/manage/userManage') {
+                    this.title = ['系统管理', '用户&权限']
+                }
             },
             getTitle: function () {
                 this.showTitle(this.$route.path);

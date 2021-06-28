@@ -20,7 +20,7 @@
             </el-form-item>
             <el-form-item>
                 <el-button type="primary" icon="el-icon-search" @click.native="handleCurrentChange(1)">搜索</el-button>
-                <el-button type="primary" @click.native="initTaskData()">添加任务
+                <el-button type="primary" @click.native="initTaskData()" v-show="role === '2' || auth.api_task_add">添加任务
                 </el-button>
             </el-form-item>
         </el-form>
@@ -65,27 +65,32 @@
                         <template slot-scope="scope">
                             <el-button type="primary" v-show="false">{{null}}</el-button>
                             <el-button type="primary" size="mini" v-if="tableData[scope.$index]['status'] === '创建'"
-                                       @click.native="editTask(tableData[scope.$index]['id'])">修改
+                                       @click.native="editTask(tableData[scope.$index]['id'])"
+                                       v-show="role === '2' || auth.api_task_edit">修改
                             </el-button>
                             <el-button type="primary" size="mini" v-if="tableData[scope.$index]['status'] === '创建'"
-                                       @click.native="startTask(tableData[scope.$index]['id'])">启动
+                                       @click.native="startTask(tableData[scope.$index]['id'])"
+                                       v-show="role === '2' || auth.api_task_todo">启动
                             </el-button>
                             <el-button type="primary" size="mini" v-if="tableData[scope.$index]['status'] !== '创建'"
-                                       v-show="tableData[scope.$index]['status'] !== '暂停'"
+                                       v-show="(role === '2' || auth.api_task_todo) && tableData[scope.$index]['status'] !== '暂停'"
                                        @click.native="pauseTask(tableData[scope.$index]['id'])">暂停
                             </el-button>
                             <el-button type="primary" size="mini" v-if="tableData[scope.$index]['status'] !== '创建'"
-                                       v-show="tableData[scope.$index]['status'] !== '启动'"
-                                       @click.native="resumeTask(tableData[scope.$index]['id'])">恢复
+                                       v-show="(role === '2' || auth.api_task_todo) && tableData[scope.$index]['status'] !== '启动'"
+                                       @click.native="resumeTask(tableData[scope.$index]['id'])">
                             </el-button>
                             <el-button type="primary" size="mini" v-if="tableData[scope.$index]['status'] !== '创建'"
-                                       @click.native="removeTask(tableData[scope.$index]['id'])">移除
+                                       @click.native="removeTask(tableData[scope.$index]['id'])"
+                                       v-show="role === '2' || auth.api_task_todo">移除
                             </el-button>
                             <el-button type="success" size="mini" :loading="scope.row.isShow"
-                                       @click.native="runNow(scope.row)">单次运行
+                                       @click.native="runNow(scope.row)"
+                                       v-show="role === '2' || auth.api_task_run">单次运行
                             </el-button>
                             <el-button type="danger" icon="el-icon-delete" size="mini"
-                                       @click.native="sureView(delTask,tableData[scope.$index]['id'],tableData[scope.$index]['task_name'])">
+                                       @click.native="sureView(delTask,tableData[scope.$index]['id'],tableData[scope.$index]['task_name'])"
+                                       v-show="role === '2' || auth.api_task_del">
                                 删除
                             </el-button>
                         </template>
@@ -128,7 +133,7 @@
                                 </el-option>
                             </el-select>
 
-                            <el-select v-model="form.set" multiple placeholder="选择用例集" value-key="id"
+                            <el-select v-model="form.set" multiple filterable placeholder="选择用例集" value-key="id"
                                        @change="changeSceneChoice"
                                        style="width: 150px;padding-right:5px">
                                 <el-option
@@ -139,7 +144,7 @@
                                 </el-option>
                             </el-select>
 
-                            <el-select v-model="form.case" multiple placeholder="选择用例" value-key="id"
+                            <el-select v-model="form.case" multiple filterable placeholder="选择用例" value-key="id"
                                        :disabled="caseStatus"
                                        style="width: 150px">
                                 <el-option
@@ -167,6 +172,17 @@
                                        style="width: 150px;padding-right:5px">
                                 <el-option
                                         v-for="item in currentUrlData"
+                                        :key="item"
+                                        :label="item"
+                                        :value="item"
+                                >
+                                </el-option>
+                            </el-select>
+
+                            <el-select v-model="taskData.clientId"
+                                       filterable style="width: 150px;padding-right:5px">
+                                <el-option
+                                        v-for="(item) in clientsList"
                                         :key="item"
                                         :label="item"
                                         :value="item"
@@ -257,16 +273,23 @@
                     formLabelWidth: '90px',
                     environment: '',
                     choiceUrl: '',
+                    clientId: '1012'
                 },
-                environmentList: ['测试环境', '开发环境', '预发环境', '线上环境'],
+                environmentList: ['测试环境', '预发环境', '灰度/正式环境'],
                 currentUrlData: Array(),
-                baseUrlData: Array()
+                baseUrlData: Array(),
+                clientsList: Array(),
+                tole: '',
+                auth: '',
             }
         },
 
 
         methods: {
             httpSend() {
+                this.role = this.$store.state.roles;
+                this.auth = JSON.parse(this.$store.state.auth);
+
                 this.$axios.get(this.$api.baseDataApi).then((response) => {
                         this.proAndIdData = response.data['pro_and_id'];
                         this.allSetList = response.data['set_list'];
@@ -329,6 +352,7 @@
                         } else {
                             this.tableData = response.data['data'];
                             this.total = response.data['total'];
+                            this.clientsList = response.data['clients'];
                         }
 
                     }
@@ -344,6 +368,7 @@
                 this.taskData.password = '';
                 this.taskData.environment = '';
                 this.taskData.choiceUrl = '';
+                this.taskData.clientId = '1012';
                 this.form.set = [];
                 this.form.case = [];
                 this.currentUrlData = [];
@@ -352,7 +377,7 @@
 
             },
             addTask() {
-                if(this.taskData.environment != '' && this.taskData.choiceUrl == ''){
+                if (this.taskData.environment != '' && this.taskData.choiceUrl == '') {
                     this.$message({
                         showClose: true,
                         message: '选择了环境必须选择url',
@@ -376,6 +401,7 @@
                     'url_index': this.currentUrlData.indexOf(this.taskData.choiceUrl),
                     'status_url': this.taskData.choiceUrl,
                     'environment': this.environmentList.indexOf(this.taskData.environment),
+                    'clientId': this.taskData.clientId
                 }).then((response) => {
 
                         if (response.data['status'] === 0) {
@@ -423,6 +449,7 @@
                         this.taskData.environment = this.environmentList[response.data['data']['environment']];
                         this.changeEnvChoice();
                         this.taskData.choiceUrl = this.currentUrlData[response.data['data']['url_index']];
+                        this.taskData.clientId = response.data['data']['client']
                     }
                 )
             },

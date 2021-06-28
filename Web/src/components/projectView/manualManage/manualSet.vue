@@ -178,6 +178,12 @@
                 :visible.sync="caseViewStatus"
                 :before-close="handleClose"
                 :size="'40%'">
+            <el-button-group style="position: absolute;top: 17px;right: 60px;">
+                <el-button type="primary" icon="el-icon-arrow-left" round size="mini"
+                           @click="switchManualCase('pre')"></el-button>
+                <el-button type="primary" round size="mini" @click="switchManualCase('next')"><i
+                        class="el-icon-arrow-right el-icon--right"></i></el-button>
+            </el-button-group>
             <div>
                 <table border="1" cellspacing="0" cellpadding="0" style="width: 95%;margin: 10px;table-layout: fixed">
                     <tr>
@@ -269,6 +275,8 @@
                     projectId: -1,
                     caseName: null,
                 },
+                previousId: 0,
+                nextId: 0,
                 caseTypeList: ['最高', '较高', '一般', '较低', '最低'],
                 features: 'ManualSet'
             }
@@ -351,13 +359,42 @@
             viewCaseApi(caseId, caseName) {
                 //  编辑或者复制接口信息
                 this.caseViewStatus = true;
-                this.$axios.post(this.$api.editAndCopyManualCaseApi, {'caseId': caseId}).then((response) => {
-                        this.dialogTitle = caseName;
+                this.$axios.post(this.$api.editAndCopyManualCaseApi, {
+                    'caseId': caseId,
+                    'setId': this.form.module.moduleId
+                }).then((response) => {
+                        this.dialogTitle = response.data['data']['name'];
                         this.viewTableData.precondition = response.data['data']['precondition'];
                         this.viewTableData.steps = response.data['data']['steps'];
                         this.viewTableData.expect = response.data['data']['expect'];
+                        this.previousId = response.data['previous_id'];
+                        this.nextId = response.data['next_id'];
                     }
                 )
+            },
+            switchManualCase(type) {
+                if (type == "pre") {
+                    if (this.previousId == 0) {
+                        this.$message({
+                            showClose: true,
+                            message: '已经是第一条了！',
+                            type: 'warning',
+                        });
+                        return
+                    }
+                    this.viewCaseApi(this.previousId, "")
+                }
+                else {
+                    if (this.nextId == 0) {
+                        this.$message({
+                            showClose: true,
+                            message: '已经是最后一条了！',
+                            type: 'warning',
+                        });
+                        return
+                    }
+                    this.viewCaseApi(this.nextId, "")
+                }
             },
             editCopyCaseApi(caseId, status) {
                 //  编辑或者复制接口信息

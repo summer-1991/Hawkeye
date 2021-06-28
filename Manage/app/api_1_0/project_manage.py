@@ -109,8 +109,7 @@ def find_project():
                  'principal': User.query.filter_by(id=c.user_id).first().name,
                  'host_two': c.host_two, 'host_three': c.host_three, 'host_four': c.host_four,
                  'host_five': c.host_five, 'host_six': c.host_six,
-                 'team_names': ','.join([user.name for user in c.users]),
-                 'edit_view': (current_user.role_id == 2 or current_user.id == c.user_id)} for
+                 'team_names': ','.join([user.name for user in c.users])} for
                 c in items]
     return jsonify({'data': end_data, 'total': total, 'status': 1, 'userData': user_data})
 

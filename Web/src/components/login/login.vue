@@ -98,6 +98,7 @@
                                 // console.log(this.$store.state.userName)
                                 this.$store.commit(types.USERNAME, response.data['name']);
                                 this.$store.commit('userName', response.data['name']);
+                                this.initAuth(response.data['auth']);
 
                                 let redirect = decodeURIComponent(this.$route.query.redirect || '/manage/projectManage');
                                 this.$router.push({path: redirect})
@@ -106,6 +107,100 @@
                     }
                 );
 
+            },
+            initAuth(authData) {
+                const auth = {
+                    "api_project": false,
+                    "api_project_add": false,
+                    "api_project_edit": false,
+                    "api_project_del": false,
+                    "api_sdk": false,
+                    "api_sdk_add": false,
+                    "api_sdk_edit": false,
+                    "api_sdk_del": false,
+                    "api_config": false,
+                    "api_config_add": false,
+                    "api_config_edit": false,
+                    "api_config_del": false,
+                    "api_func": false,
+                    "api_func_add": false,
+                    "api_func_run": false,
+                    "api_func_save": false,
+                    "api_api": false,
+                    "api_api_add": false,
+                    "api_api_todo": false,
+                    "api_api_edit": false,
+                    "api_api_del": false,
+                    "api_api_run": false,
+                    "api_scene": false,
+                    "api_scene_add": false,
+                    "api_scene_todo": false,
+                    "api_scene_edit": false,
+                    "api_scene_del": false,
+                    "api_scene_run": false,
+                    "api_scene_batch": false,
+                    "api_task": false,
+                    "api_task_add": false,
+                    "api_task_todo": false,
+                    "api_task_edit": false,
+                    "api_task_del": false,
+                    "api_task_run": false,
+                    "api_report": false,
+                    "api_report_del": false,
+                    "manual_case": false,
+                    "manual_case_todo": false,
+                    "manual_case_save": false,
+                    "others_wiki": false,
+                    "others_wiki_add": false,
+                    "others_wiki_todo": false,
+                    "others_wiki_edit": false,
+                    "others_wiki_del": false,
+                    "others_mind": false,
+                    "others_resources": false,
+                    "others_resources_add": false,
+                    "others_resources_edit": false,
+                    "others_resources_del": false,
+                };
+
+                if (authData != 0) {
+                    let temp = "";
+                    let un = 0;
+                    for (let key in auth) {
+                        if (un == 1 && key.indexOf(temp) != -1) {
+                            auth[key] = false;
+                            continue;
+                        } else {
+                            un = 0;
+                            temp = '';
+                        }
+
+                        let keyList = key.split("_");
+                        if (keyList.length == 2) {
+                            let i = keyList[0];
+                            let j = keyList[1];
+                            if (authData[i] == undefined || authData[i]["manage"][j] == undefined) {
+                                temp = key;
+                                un = 1;
+                                auth[key] = false;
+                                continue;
+                            } else {
+                                auth[key] = authData[i]["manage"][j]["checked"];
+                            }
+                        } else {
+                            let i = keyList[0];
+                            let j = keyList[1];
+                            let k = keyList[2];
+                            if (authData[i]["manage"][j]["option"][k] == undefined) {
+                                auth[key] = false;
+                            } else {
+                                auth[key] = authData[i]["manage"][j]["option"][k]["checked"]
+                            }
+                        }
+                    }
+                }
+
+                this.$store.commit(types.AUTH, JSON.stringify(auth));
+                this.$store.commit("auth", JSON.stringify(auth));
             },
         }
     }

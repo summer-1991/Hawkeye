@@ -42,8 +42,10 @@
 
             <el-form-item>
                 <el-button type="primary" icon="el-icon-search" @click.native="handleCurrentChange(1)">搜索</el-button>
-                <el-button type="primary" @click.native="initData()">录入接口信息</el-button>
-                <el-button type="primary" @click.native="apiTest(apiMsgList)">测试
+                <el-button type="primary" @click.native="initData()" v-if="role == '2' || auth.api_api_add">录入接口信息
+                </el-button>
+                <el-button type="primary" @click.native="apiTest(apiMsgList)" v-if="role == '2' || auth.api_api_run">
+                    测试
                 </el-button>
 
                 <el-button type="primary" icon="el-icon-view" @click.native="$refs.resultFunc.lastResult()">{{null}}
@@ -62,7 +64,8 @@
                             style="border:1px solid;border-color: #ffffff rgb(234, 234, 234) #ffffff #ffffff;">
                         <el-row>
                             <el-col style="border:1px solid;border-color: #ffffff #ffffff rgb(234, 234, 234) #ffffff;padding:2px">
-                                <el-dropdown @command="moduleCommand" style="float:right;">
+                                <el-dropdown @command="moduleCommand" style="float:right;"
+                                             v-if="role == '2' || auth.api_api_todo">
                                       <span class="el-dropdown-link" style="color: #4ae2d5">
                                         操作<i class="el-icon-arrow-down el-icon--right"></i>
                                       </span>
@@ -146,15 +149,18 @@
                                     width="320">
                                 <template slot-scope="scope">
                                     <el-button type="primary" icon="el-icon-edit" size="mini"
-                                               @click.native="editCopyApi(ApiMsgTableData[scope.$index]['apiMsgId'],'edit')">
+                                               @click.native="editCopyApi(ApiMsgTableData[scope.$index]['apiMsgId'],'edit')"
+                                               v-if="role == '2' || auth.api_api_edit">
                                         编辑
                                     </el-button>
                                     <el-button type="primary" icon="el-icon-tickets" size="mini"
-                                               @click.native="editCopyApi(ApiMsgTableData[scope.$index]['apiMsgId'],'copy')">
+                                               @click.native="editCopyApi(ApiMsgTableData[scope.$index]['apiMsgId'],'copy')"
+                                               v-if="role == '2' || auth.api_api_edit">
                                         复制
                                     </el-button>
                                     <el-button type="danger" icon="el-icon-delete" size="mini"
-                                               @click.native="sureView(delApi,ApiMsgTableData[scope.$index]['apiMsgId'],ApiMsgTableData[scope.$index]['name'])">
+                                               @click.native="sureView(delApi,ApiMsgTableData[scope.$index]['apiMsgId'],ApiMsgTableData[scope.$index]['name'])"
+                                               v-if="role == '2' || auth.api_api_del">
                                         删除
                                     </el-button>
                                 </template>
@@ -178,7 +184,7 @@
                 </el-row>
 
             </el-tab-pane>
-            <el-tab-pane label="接口配置" name="second" v-show="apiEditViewStatus"
+            <el-tab-pane label="接口配置" name="second" v-if="apiEditViewStatus"
                          style="background-color: rgb(250, 250, 250);min-height: 760px">
                 <apiEdit
                         :projectId="form.projectId"
@@ -188,6 +194,7 @@
                         :proModelData="proModelData"
                         :proUrlData="proUrlData"
                         :baseUrlData="baseUrlData"
+                        :clientList="clientList"
                         @findApiMsg="findApiMsg"
                         @apiTest="apiTest"
                         ref="apiFunc">
@@ -261,6 +268,7 @@
                 baseUrlData: Array(),
                 ApiMsgTableData: Array(),   //  接口表单数据
                 apiMsgList: Array(),    //  临时存储接口数据
+                clientList: Array(),  //client数据
                 funcAddress: null,
                 moduleDataList: [],
                 defaultProps: {
@@ -294,11 +302,16 @@
                     apiName: null,
 
                 },
+                role: '',
+                auth: '',
             }
         },
 
         methods: {
             initBaseData() {
+                this.role = this.$store.state.roles;
+                this.auth = JSON.parse(this.$store.state.auth);
+
                 //  初始化页面所需要的数据
                 this.$axios.get(this.$api.baseDataApi).then((response) => {
                         this.proAndIdData = response.data['pro_and_id'];
@@ -364,6 +377,7 @@
                         if (this.messageShow(this, response)) {
                             this.ApiMsgTableData = response.data['data'];
                             this.apiMsgPage.total = response.data['total'];
+                            this.clientList = response.data['clients'];
                         }
                     }
                 )
@@ -406,13 +420,14 @@
                     }
                 )
             },
-            apiTest(apiMsgData = null) {
+            apiTest(apiMsgData = null, runByRequest = 0) {
                 //  接口调试
                 this.loading = true;
                 this.$axios.post(this.$api.runApiApi, {
                     'apiMsgData': apiMsgData,
                     'projectId': this.form.projectId,
                     'configId': this.form.configId,
+                    'runByRequest': runByRequest,
                 }).then((response) => {
                         if (response.data['status'] === 0) {
                             this.$message({
@@ -465,16 +480,15 @@
                             this.moduleDataList = response.data['data'];
                             this.modulePage.total = response.data['total'];
                             this.proModelData[this.form.projectId] = response.data['all_module'];
-                            if(this.moduleDataList.length !== 0){
+                            if (this.moduleDataList.length !== 0) {
                                 this.form.module = this.moduleDataList[0];
                                 this.$nextTick(function () {
                                     this.$refs.testTree.setCurrentKey(this.form.module.moduleId);  //"vuetree"是你自己在树形控件上设置的 ref="vuetree" 的名称
                                 });
                                 this.findApiMsg();
-                            }else {
+                            } else {
                                 this.ApiMsgTableData = []
                             }
-
 
 
                         }

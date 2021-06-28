@@ -17,11 +17,12 @@ import testTool from './components/projectView/testTool/testTool.vue'
 import taskManage from './components/projectView/taskManage/task.vue'
 import user from './components/projectView/userManage/user.vue'
 import sceneConfig from './components/projectView/config/config.vue'
-import sysManage from './components/projectView/sysManage/client.vue'
+import sdkManage from './components/projectView/sdkManage/sdkConfig.vue'
 import wikiManage from './components/wiki/wiki.vue'
 import manualSet from './components/projectView/manualManage/manualSet.vue'
 import manualTask from './components/projectView/manualManage/manualTask.vue'
 import ganttModel from './components/gantt/gantt.vue'
+import testResource from './components/projectView/testTool/testResource.vue'
 
 //import testCaseEditor from './components/testCaseEdit/editor.vue'
 import login from './components/login/login.vue'
@@ -68,18 +69,39 @@ const routes = [
 
 
             },
-
+            {
+                path: 'sdkManage',
+                meta: {
+                    title: 'SDK配置',
+                    requireAuth: true,
+                },
+                components: {
+                    Header: Header,
+                    Manage: sdkManage,
+                }
+            },
             {
                 path: 'sceneConfig',
                 // component:caseManage,
 
                 meta: {
-                    title: '内置函数',
+                    title: '项目函数',
                     requireAuth: true,
                 },
                 components: {
                     Header: Header,
                     Manage: sceneConfig,
+                }
+            },
+            {
+                path: 'buildInFunc',
+                meta: {
+                    title: '函数文件',
+                    requireAuth: true,
+                },
+                components: {
+                    Header: Header,
+                    Manage: buildInFunc,
                 }
             },
             {
@@ -94,7 +116,28 @@ const routes = [
                     Manage: caseManage,
                 }
             },
-
+            {
+                path: 'sceneManage',
+                meta: {
+                    title: '业务用例',
+                    requireAuth: true,
+                },
+                components: {
+                    Header: Header,
+                    Manage: sceneManage,
+                }
+            },
+            {
+                path: 'taskManage',
+                meta: {
+                    title: '定时任务',
+                    requireAuth: true,
+                },
+                components: {
+                    Header: Header,
+                    Manage: taskManage,
+                }
+            },
             {
                 path: 'reportManage',
                 meta: {
@@ -115,95 +158,6 @@ const routes = [
                 components: {
                     Header: reportHeader,
                     Manage: reportShow,
-                }
-            },
-
-            {
-                path: 'buildInFunc',
-                meta: {
-                    title: '函数文件',
-                    requireAuth: true,
-                },
-                components: {
-                    Header: Header,
-                    Manage: buildInFunc,
-                }
-            },
-            {
-                path: 'sceneManage',
-                meta: {
-                    title: '业务用例',
-                    requireAuth: true,
-                },
-                components: {
-                    Header: Header,
-                    Manage: sceneManage,
-                }
-            },
-            {
-                path: 'wikiManage',
-                meta: {
-                    title: '文档库',
-                    requireAuth: true,
-                },
-                components: {
-                    Header: Header,
-                    Manage: wikiManage,
-                }
-            },
-            {
-                path:'ganttModel',
-                meta: {
-                    title: '甘特图',
-                    requireAuth: true,
-                },
-                components: {
-                    Header: Header,
-                    Manage: ganttModel,
-                }
-            },
-            {
-                path: 'testTool',
-                meta: {
-                    title: '工具页面',
-                    requireAuth: true,
-                },
-                components: {
-                    Header: Header,
-                    Manage: testTool,
-                }
-            },
-            {
-                path: 'userManage',
-                meta: {
-                    title: '用户&权限',
-                    requireAuth: true,
-                },
-                components: {
-                    Header: Header,
-                    Manage: user,
-                }
-            },
-            {
-                path: 'sysManage',
-                meta: {
-                    title: '后台配置',
-                    requireAuth: true,
-                },
-                components: {
-                    Header: Header,
-                    Manage: sysManage,
-                }
-            },
-            {
-                path: 'taskManage',
-                meta: {
-                    title: '定时任务',
-                    requireAuth: true,
-                },
-                components: {
-                    Header: Header,
-                    Manage: taskManage,
                 }
             },
             {
@@ -228,6 +182,61 @@ const routes = [
                     Manage: manualTask,
                 }
             },
+            {
+                path: 'wikiManage',
+                meta: {
+                    title: '文档库',
+                    requireAuth: true,
+                },
+                components: {
+                    Header: Header,
+                    Manage: wikiManage,
+                }
+            },
+            {
+                path: 'ganttModel',
+                meta: {
+                    title: '甘特图',
+                    requireAuth: true,
+                },
+                components: {
+                    Header: Header,
+                    Manage: ganttModel,
+                }
+            },
+            {
+                path: 'testResource',
+                meta: {
+                    title: '测试资源',
+                    requireAuth: true,
+                },
+                components: {
+                    Header: Header,
+                    Manage: testResource,
+                }
+            },
+            {
+                path: 'testTool',
+                meta: {
+                    title: '工具页面',
+                    requireAuth: true,
+                },
+                components: {
+                    Header: Header,
+                    Manage: testTool,
+                }
+            },
+            {
+                path: 'userManage',
+                meta: {
+                    title: '用户&权限',
+                    requireAuth: true,
+                },
+                components: {
+                    Header: Header,
+                    Manage: user,
+                }
+            },
         ],
 
     },
@@ -243,7 +252,10 @@ const routes = [
         path: '/testCaseEdit',
         component: resolve => (require(["@/components/testCaseEdit/editor.vue"], resolve))
     },
-
+    {
+        path: '/excelCaseEdit',
+        component: resolve => (require(["@/components/manualCaseEdit/manualExcel.vue"], resolve))
+    },
 ];
 
 // 页面刷新时，重新赋值token
@@ -255,6 +267,9 @@ if (window.localStorage.getItem('roles')) {
 }
 if (window.localStorage.getItem('userName')) {
     store.commit(types.USERNAME, window.localStorage.getItem('userName'));
+}
+if (window.localStorage.getItem('auth')) {
+    store.commit(types.AUTH, window.localStorage.getItem('auth'));
 }
 
 

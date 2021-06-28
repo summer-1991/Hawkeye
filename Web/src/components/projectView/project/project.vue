@@ -11,7 +11,8 @@
                 <el-button type="primary" icon="el-icon-search" @click.native="proHandleCurrentChange(1)">
                     搜索
                 </el-button>
-                <el-button type="primary" @click.native="initProjectData()">添加项目
+                <el-button type="primary" @click.native="initProjectData()"
+                           v-if="role == '2' || auth.api_project_add">添加项目
                 </el-button>
             </el-form-item>
 
@@ -62,10 +63,11 @@
                         <template slot-scope="scope">
                             <el-button type="primary" icon="el-icon-edit" size="mini"
                                        @click.native="editProject(tableData[scope.$index]['id'])"
-                                       v-if="tableData[scope.$index]['edit_view']">编辑
+                                       v-if="role == '2' || auth.api_project_edit">编辑
                             </el-button>
                             <el-button type="danger" icon="el-icon-delete" size="mini"
-                                       @click.native="sureView(delProject,tableData[scope.$index]['id'],tableData[scope.$index]['name'])">
+                                       @click.native="sureView(delProject,tableData[scope.$index]['id'],tableData[scope.$index]['name'])"
+                                       v-if="role == '2' || auth.api_project_del">
                                 删除
                             </el-button>
                         </template>
@@ -135,7 +137,7 @@
                     <hr style="height:1px;border:none;border-top:1px solid rgb(241, 215, 215);margin-top: -10px"/>
                     <el-tabs v-model="environmentChoice" type="card">
                         <el-tab-pane label="测试环境" name="first">
-                            <el-table :data="environment.environmentTest" size="mini" stripe :show-header="false">
+                            <el-table :data="environment.test" size="mini" stripe :show-header="false">
                                 <el-table-column property="value" label="Value" header-align="center" minWidth="200">
                                     <template slot-scope="scope">
                                         <el-input v-model="scope.row.value" size="mini"
@@ -152,8 +154,8 @@
                                 </el-table-column>
                             </el-table>
                         </el-tab-pane>
-                        <el-tab-pane label="开发环境" name="second">
-                            <el-table :data="environment.environmentDevelop" size="mini" stripe :show-header="false">
+                        <el-tab-pane label="预发环境" name="second">
+                            <el-table :data="environment.pre" size="mini" stripe :show-header="false">
                                 <el-table-column property="value" label="Value" header-align="center" minWidth="200">
                                     <template slot-scope="scope">
                                         <el-input v-model="scope.row.value" size="mini"
@@ -164,14 +166,14 @@
                                 <el-table-column property="value" label="操作" header-align="center" width="50">
                                     <template slot-scope="scope">
                                         <el-button type="danger" icon="el-icon-delete" size="mini"
-                                                   @click.native="delTableRow('develop',scope.$index)">
+                                                   @click.native="delTableRow('pre',scope.$index)">
                                         </el-button>
                                     </template>
                                 </el-table-column>
                             </el-table>
                         </el-tab-pane>
-                        <el-tab-pane label="预发环境" name="third">
-                            <el-table :data="environment.environmentProduction" size="mini" stripe :show-header="false">
+                        <el-tab-pane label="灰度/正式环境" name="third">
+                            <el-table :data="environment.production" size="mini" stripe :show-header="false">
                                 <el-table-column property="value" label="Value" header-align="center" minWidth="200">
                                     <template slot-scope="scope">
                                         <el-input v-model="scope.row.value" size="mini"
@@ -188,25 +190,7 @@
                                 </el-table-column>
                             </el-table>
                         </el-tab-pane>
-                        <el-tab-pane label="线上环境" name="fourth">
-                            <el-table :data="environment.environmentStandby" size="mini" stripe :show-header="false">
-                                <el-table-column property="value" label="Value" header-align="center" minWidth="200">
-                                    <template slot-scope="scope">
-                                        <el-input v-model="scope.row.value" size="mini"
-                                                  placeholder="http://127.0.0.1:8010">
-                                        </el-input>
-                                    </template>
-                                </el-table-column>
-                                <el-table-column property="value" label="操作" header-align="center" width="50">
-                                    <template slot-scope="scope">
-                                        <el-button type="danger" icon="el-icon-delete" size="mini"
-                                                   @click.native="delTableRow('standby',scope.$index)">
-                                        </el-button>
-                                    </template>
-                                </el-table-column>
-                            </el-table>
-                        </el-tab-pane>
-                        <el-tab-pane label="GM测试" name="fifth">
+                        <el-tab-pane label="GM测试" name="fourth">
                             <el-table :data="environment.gmTest" size="mini" stripe :show-header="false">
                                 <el-table-column property="value" label="Value" header-align="center" minWidth="200">
                                     <template slot-scope="scope">
@@ -224,8 +208,8 @@
                                 </el-table-column>
                             </el-table>
                         </el-tab-pane>
-                        <el-tab-pane label="GM正式" name="sixth">
-                            <el-table :data="environment.gmStandby" size="mini" stripe :show-header="false">
+                        <el-tab-pane label="GM预发" name="fifth">
+                            <el-table :data="environment.gmPre" size="mini" stripe :show-header="false">
                                 <el-table-column property="value" label="Value" header-align="center" minWidth="200">
                                     <template slot-scope="scope">
                                         <el-input v-model="scope.row.value" size="mini"
@@ -236,7 +220,7 @@
                                 <el-table-column property="value" label="操作" header-align="center" width="50">
                                     <template slot-scope="scope">
                                         <el-button type="danger" icon="el-icon-delete" size="mini"
-                                                   @click.native="delTableRow('gmstandby',scope.$index)">
+                                                   @click.native="delTableRow('gmpre',scope.$index)">
                                         </el-button>
                                     </template>
                                 </el-table-column>
@@ -330,12 +314,12 @@
 
                 environmentChoice: 'first',
                 environment: {
-                    environmentTest: [{value: ''}],
-                    environmentDevelop: [{value: ''}],
-                    environmentProduction: [{value: ''}],
-                    environmentStandby: [{value: ''}],
+                    test: [{value: ''}],
+                    pre: [{value: ''}],
+                    production: [{value: ''}],
                     gmTest: [{value: ''}],
-                    gmStandby: [{value: ''}],
+                    gmPre: [{value: ''}],
+                    gmProduction: [{value: ''}],
                 },
                 tableData: Array(),
                 total: 1,
@@ -366,7 +350,9 @@
                     header: Array(),
                     variable: Array(),
                 },
-                currentUser: 0
+                currentUser: 0,
+                auth: '',
+                role: '',
             }
         },
         methods: {
@@ -380,6 +366,9 @@
             },
 
             findProject() {
+                this.role = this.$store.state.roles;
+                this.auth = JSON.parse(this.$store.state.auth);
+
                 this.$axios.post(this.$api.findProApi, {
                     'projectName': this.form.projectName,
                     'page': this.currentPage,
@@ -402,12 +391,11 @@
             },
             initProjectData() {
                 this.projectData.projectName = null;
-                this.environment.environmentTest = Array();
-                this.environment.environmentDevelop = Array();
-                this.environment.environmentProduction = Array();
-                this.environment.environmentStandby = Array();
-                this.environment.gmTets = Array();
-                this.environment.gmStandby = Array();
+                this.environment.test = Array();
+                this.environment.pre = Array();
+                this.environment.production = Array();
+                this.environment.gmTest = Array();
+                this.environment.gmPre = Array();
                 this.form.user = {};
                 this.form.team_ids = Array();
                 this.projectData.principal = null;
@@ -468,12 +456,11 @@
                     'principal': this.projectData.principal,
                     'funcFile': this.projectData.funcFile,
                     'environmentChoice': 'first',
-                    'host': this.dealHostList(this.environment.environmentTest),
-                    'hostTwo': this.dealHostList(this.environment.environmentDevelop),
-                    'hostThree': this.dealHostList(this.environment.environmentProduction),
-                    'hostFour': this.dealHostList(this.environment.environmentStandby),
-                    'hostFive': this.dealHostList(this.environment.gmTest),
-                    'hostSix': this.dealHostList(this.environment.gmStandby),
+                    'host': this.dealHostList(this.environment.test),
+                    'hostTwo': this.dealHostList(this.environment.pre),
+                    'hostThree': this.dealHostList(this.environment.production),
+                    'hostFour': this.dealHostList(this.environment.gmTest),
+                    'hostFive': this.dealHostList(this.environment.gmPre),
                     'id': this.projectData.id,
                     'header': JSON.stringify(this.projectData.header),
                     'userId': this.form.user.user_id,
@@ -495,12 +482,11 @@
                         this.projectData.projectName = response.data['data']['pro_name'];
                         this.projectData.principal = response.data['data']['principal'];
                         this.environmentChoice = response.data['data']['environment_choice'];
-                        this.environment.environmentTest = this.dealHostDict(response.data['data']['host']);
-                        this.environment.environmentDevelop = this.dealHostDict(response.data['data']['host_two']);
-                        this.environment.environmentProduction = this.dealHostDict(response.data['data']['host_three']);
-                        this.environment.environmentStandby = this.dealHostDict(response.data['data']['host_four']);
-                        this.environment.gmTest = this.dealHostDict(response.data['data']['host_five']);
-                        this.environment.gmStandby = this.dealHostDict(response.data['data']['host_six']);
+                        this.environment.test = this.dealHostDict(response.data['data']['host']);
+                        this.environment.pre = this.dealHostDict(response.data['data']['host_two']);
+                        this.environment.production = this.dealHostDict(response.data['data']['host_three']);
+                        this.environment.gmTest = this.dealHostDict(response.data['data']['host_four']);
+                        this.environment.gmPre = this.dealHostDict(response.data['data']['host_five']);
                         this.projectData.header = response.data['data']['headers'];
                         this.projectData.variable = response.data['data']['variables'];
                         this.projectData.id = id;
@@ -537,10 +523,8 @@
                 if (choice === 'first') {
                     return '测试环境'
                 } else if (choice === 'second') {
-                    return '开发环境'
-                } else if (choice === 'third') {
                     return '预发环境'
-                } else if (choice === 'fourth') {
+                } else if (choice === 'third') {
                     return '线上环境'
                 }
             },
@@ -551,98 +535,80 @@
                     type: 'warning'
                 }).then(() => {
                     if (type === 'test') {
-                        this.environment.environmentTest.splice(i, 1);
-                    } else if (type === 'develop') {
-                        this.environment.environmentDevelop.splice(i, 1);
+                        this.environment.test.splice(i, 1);
+                    } else if (type === 'pre') {
+                        this.environment.pre.splice(i, 1);
                     } else if (type === 'production') {
-                        this.environment.environmentProduction.splice(i, 1);
-                    } else if (type === 'standby') {
-                        this.environment.environmentStandby.splice(i, 1);
+                        this.environment.production.splice(i, 1);
                     } else if (type === 'gmtest') {
                         this.environment.gmTest.splice(i, 1);
-                    } else if (type === 'gmstandby') {
-                        this.environment.gmStandby.splice(i, 1);
+                    } else if (type === 'gmpre') {
+                        this.environment.gmPre.splice(i, 1);
                     }
                 }).catch(() => {
                 });
             },
             addTableRow(type) {
                 if (type === 'test') {
-                    this.environment.environmentTest.push({value: ''});
-                } else if (type === 'develop') {
-                    this.environment.environmentDevelop.push({value: ''});
+                    this.environment.test.push({value: ''});
+                } else if (type === 'pre') {
+                    this.environment.pre.push({value: ''});
                 } else if (type === 'production') {
-                    this.environment.environmentProduction.push({value: ''});
-                } else if (type === 'standby') {
-                    this.environment.environmentStandby.push({value: ''});
+                    this.environment.production.push({value: ''});
                 } else if (type === 'gmtest') {
                     this.environment.gmTest.push({value: ''});
-                } else if (type === 'gmstandby') {
-                    this.environment.gmStandby.push({value: ''});
+                } else if (type === 'gmpre') {
+                    this.environment.gmPre.push({value: ''});
                 }
             },
         },
         computed: {
             monitorEnvironmentTest() {
-                return this.environment.environmentTest;
+                return this.environment.test;
             },
-            monitorEnvironmentDevelop() {
-                return this.environment.environmentDevelop;
+            monitorEnvironmentPre() {
+                return this.environment.pre;
             },
             monitorEnvironmentProduction() {
-                return this.environment.environmentProduction;
-            },
-            monitorEnvironmentStandby() {
-                return this.environment.environmentStandby;
+                return this.environment.production;
             },
             monitorGmTest() {
                 return this.environment.gmTest;
             },
-            monitorGmStandby() {
-                return this.environment.gmStandby;
+            monitorGmPre() {
+                return this.environment.gmPre;
             },
         },
         watch: {
             monitorEnvironmentTest: {
                 handler: function () {
-                    if (this.environment.environmentTest.length === 0) {
+                    if (this.environment.test.length === 0) {
                         this.addTableRow('test')
                     }
-                    if (this.environment.environmentTest[this.environment.environmentTest.length - 1]['value']) {
+                    if (this.environment.test[this.environment.test.length - 1]['value']) {
                         this.addTableRow('test')
                     }
                 },
                 deep: true
             },
-            monitorEnvironmentDevelop: {
+            monitorEnvironmentPre: {
                 handler: function () {
-                    if (this.environment.environmentDevelop.length === 0) {
-                        this.addTableRow('develop')
+                    if (this.environment.pre.length === 0) {
+                        this.addTableRow('pre')
                     }
-                    if (this.environment.environmentDevelop[this.environment.environmentDevelop.length - 1]['value']) {
-                        this.addTableRow('develop')
+                    if (this.environment.pre[this.environment.pre.length - 1]['value']) {
+                        this.addTableRow('pre')
                     }
                 },
                 deep: true
             },
             monitorEnvironmentProduction: {
                 handler: function () {
-                    if (this.environment.environmentProduction.length === 0) {
+                    if (this.environment.production.length === 0) {
                         this.addTableRow('production')
                     }
-                    if (this.environment.environmentProduction[this.environment.environmentProduction.length - 1]['value']) {
+                    if (this.environment.production[this.environment.production.length - 1]['value']) {
                         this.addTableRow('production')
-                    }
-                },
-                deep: true
-            },
-            monitorEnvironmentStandby: {
-                handler: function () {
-                    if (this.environment.environmentStandby.length === 0) {
-                        this.addTableRow('standby')
-                    }
-                    if (this.environment.environmentStandby[this.environment.environmentStandby.length - 1]['value']) {
-                        this.addTableRow('standby')
                     }
                 },
                 deep: true
@@ -658,13 +624,13 @@
                 },
                 deep: true
             },
-            monitorGmStandby: {
+            monitorGmPre: {
                 handler: function () {
-                    if (this.environment.gmStandby.length === 0) {
-                        this.addTableRow('gmstandby')
+                    if (this.environment.gmPre.length === 0) {
+                        this.addTableRow('gmpre')
                     }
-                    if (this.environment.gmStandby[this.environment.gmStandby.length - 1]['value']) {
-                        this.addTableRow('gmstandby')
+                    if (this.environment.gmPre[this.environment.gmPre.length - 1]['value']) {
+                        this.addTableRow('gmpre')
                     }
                 },
                 deep: true

@@ -142,8 +142,15 @@ def login():
         login_user(user, True)
         token = user.generate_reset_token()
         token = bytes.decode(token)
+
+        _data = Role.query.filter_by(id=user.role_id).first()
+        try:
+            auth = json.loads(_data.auth)
+        except (TypeError, ValueError):
+            auth = 0
+
         return jsonify({'msg': '登录成功', 'status': 1, 'token': token,
-                        'name': user.name, 'userId': user.id, 'roles': str(user.role_id)})
+                        'name': user.name, 'userId': user.id, 'roles': str(user.role_id), 'auth': auth})
 
 
 @api.route('/user/find', methods=['POST'])
@@ -210,3 +217,61 @@ def change_status_user():
         _edit.status = 1
         db.session.commit()
         return jsonify({'msg': '恢复成功', 'status': 1})
+
+
+@api.route('/role/find', methods=['POST'])
+@admin_required
+@login_required
+def role_find():
+    """ 获取所有用户角色 """
+    data = request.json
+    page = data.get('page') if data.get('page') else 1
+    per_page = data.get('sizePage') if data.get('sizePage') else 10
+
+    all_role = Role.query.filter(Role.id != 2)
+
+    pagination = all_role.paginate(page, per_page=per_page, error_out=False)
+    items = pagination.items
+    total = pagination.total
+    end_data = [{'name': c.name, 'roleId': c.id} for c in items]
+
+    return jsonify({'data': end_data, 'total': total, 'status': 1})
+
+
+@api.route('/auth/add', methods=['POST'])
+@admin_required
+@login_required
+def add_auth():
+    """ 设置权限 """
+    data = request.json
+    role_id = data.get("roleId")
+    auth = data.get("auth")
+
+    if not role_id:
+        return jsonify({'msg': '请选择角色进行设置', 'status': 0})
+
+    old_data = Role.query.filter_by(id=role_id).first()
+    old_data.auth = json.dumps(auth, sort_keys=False)
+    db.session.commit()
+    return jsonify({'msg': '设置成功', 'status': 1})
+
+
+@api.route('/auth/find', methods=['POST'])
+@admin_required
+@login_required
+def find_auth():
+    """ 查权限 """
+    data = request.json
+    role_id = data.get("roleId")
+
+    if not role_id:
+        return jsonify({'msg': '请选择角色进行查询', 'status': 0})
+
+    _data = Role.query.filter_by(id=role_id).first()
+
+    try:
+        end_data = json.loads(_data.auth)
+    except (TypeError, ValueError):
+        return jsonify({'data': {}, 'status': 1})
+
+    return jsonify({'data': end_data, 'status': 1})

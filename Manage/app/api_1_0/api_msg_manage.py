@@ -27,6 +27,7 @@ def add_api_msg():
     url = data.get('url').split('?')[0]
     skip = data.get('skip')
     environment = data.get('environment')
+    client_id = data.get('clientId')
     sig = data.get('sig')
     status_url = data.get('choiceUrl')
     variable = data.get('variable')
@@ -63,6 +64,7 @@ def add_api_msg():
         old_data.down_func = down_func
         old_data.desc = desc
         old_data.environment = environment
+        old_data.client = client_id
         old_data.sig = sig
         old_data.status_url = status_url
         old_data.variable_type = variable_type
@@ -96,6 +98,7 @@ def add_api_msg():
                                project_id=project_id,
                                module_id=module_id,
                                environment=environment,
+                               client=client_id,
                                sig=sig,
                                status_url=status_url,
                                variable_type=variable_type,
@@ -115,7 +118,7 @@ def edit_api_msg():
     _edit = ApiMsg.query.filter_by(id=case_id).first()
     _data = {'name': _edit.name, 'num': _edit.num, 'desc': _edit.desc, 'url': _edit.url, 'skip': _edit.skip,
              'method': _edit.method, 'environment': _edit.environment, 'status_url': int(_edit.status_url),
-             'up_func': _edit.up_func, 'down_func': _edit.down_func, 'sig': _edit.sig,
+             'up_func': _edit.up_func, 'down_func': _edit.down_func, 'sig': _edit.sig, 'client': _edit.client,
              'variableType': _edit.variable_type,
              'param': json.loads(_edit.param),
              'header': json.loads(_edit.header),
@@ -137,14 +140,38 @@ def run_api_msg():
     if not api_msg_data:
         return jsonify({'msg': '请勾选信息后，再进行测试', 'status': 0})
 
-    # 前端传入的数据不是按照编号来的，所以这里重新排序
-    api_ids = [(item['num'], item['apiMsgId']) for item in api_msg_data]
-    api_ids.sort(key=lambda x: x[0])
-    # api_data = [ApiMsg.query.filter_by(id=c[1]).first() for c in api_ids]
-    api_ids = [c[1] for c in api_ids]
+    _data = None
+    api_ids = [0]
+    if str(data.get('runByRequest')) == '1':
+        api_msg_data = api_msg_data[0]
+        if not api_msg_data['name']:
+            return jsonify({'msg': '接口名称不能为空', 'status': 0})
+        if not api_msg_data['url']:
+            return jsonify({'msg': '接口url不能为空', 'status': 0})
+        if api_msg_data['statusUrl'] == -1:
+            if 'http' not in api_msg_data['url']:
+                return jsonify({'msg': '基础url为空时，请补全api地址', 'status': 0})
+
+        project_id = api_msg_data['projectId']
+        _data = ApiMsg(name=api_msg_data['name'], num=api_msg_data['num'], header=api_msg_data['header'],
+                       up_func=api_msg_data['upFunc'], down_func=api_msg_data['downFunc'], url=api_msg_data['url'],
+                       skip=api_msg_data['skip'], desc=api_msg_data['desc'], param=api_msg_data['param'],
+                       method=api_msg_data['method'], variable=api_msg_data['variable'],
+                       validate=api_msg_data['validate'],
+                       environment=api_msg_data['environment'], sig=api_msg_data['sig'], client=api_msg_data['client'],
+                       status_url=str(api_msg_data['statusUrl']),
+                       variable_type=api_msg_data['variableType'], json_variable=api_msg_data['jsonVariable'],
+                       extract=api_msg_data['extract'],
+                       project_id=api_msg_data['projectId'], module_id=api_msg_data['moduleId'], )
+    else:
+        # 前端传入的数据不是按照编号来的，所以这里重新排序
+        api_ids = [(item['num'], item['apiMsgId']) for item in api_msg_data]
+        api_ids.sort(key=lambda x: x[0])
+        # api_data = [ApiMsg.query.filter_by(id=c[1]).first() for c in api_ids]
+        api_ids = [c[1] for c in api_ids]
 
     d = RunCase(project_id)
-    d.get_api_test(api_ids, config_id)
+    d.get_api_test(api_ids, config_id, _data)
     res = json.loads(d.run_case())
 
     return jsonify({'msg': '测试完成', 'data': res, 'status': 1})
@@ -197,7 +224,11 @@ def find_api_msg():
                                 'validate': [True, True], 'param': [True, True], 'header': [True, True]},
                  'status': True, 'case_name': c.name, 'down_func': c.down_func, 'up_func': c.up_func, 'time': 1}
                 for c in items]
-    return jsonify({'data': end_data, 'total': total, 'status': 1})
+
+    _client_config = CommonConfig.query.filter_by(c_type='client')
+    client_config = [c.c_key for c in _client_config]
+
+    return jsonify({'data': end_data, 'clients': client_config, 'total': total, 'status': 1})
 
 
 @api.route('/apiMsg/del', methods=['POST'])

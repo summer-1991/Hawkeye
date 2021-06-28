@@ -22,6 +22,7 @@ def add_case():
     project_data = Project.query.filter_by(id=project_id).first()
     variable = data.get('variable')
     api_cases = data.get('apiCases')
+    client_id = data.get('clientId')
     environment = data.get('environment')
     status_url = data.get('status_url')
 
@@ -56,6 +57,7 @@ def add_case():
             old_data.times = times
             old_data.project_id = project_id
             old_data.desc = desc
+            old_data.client = client_id
             old_data.environment = environment
             old_data.status_url = status_url
             old_data.case_set_id = case_set_id
@@ -112,7 +114,7 @@ def add_case():
             return jsonify({'msg': '编号重复', 'status': 0})
         else:
 
-            new_case = Case(num=num, name=name, desc=desc, project_id=project_id, variable=variable,
+            new_case = Case(num=num, name=name, desc=desc, project_id=project_id, variable=variable, client=client_id,
                             func_address=func_address, case_set_id=case_set_id, times=times, environment=environment,
                             status_url=status_url)
             db.session.add(new_case)
@@ -166,7 +168,11 @@ def find_case():
     end_data = [{'num': c.num, 'name': c.name, 'label': c.name, 'leaf': True, 'desc': c.desc, 'sceneId': c.id,
                  }
                 for c in items]
-    return jsonify({'data': end_data, 'total': total, 'status': 1})
+
+    _client_config = CommonConfig.query.filter_by(c_type='client')
+    client_config = [c.c_key for c in _client_config]
+
+    return jsonify({'data': end_data, 'clients': client_config, 'total': total, 'status': 1})
 
 
 @api.route('/case/del', methods=['POST'])
@@ -237,8 +243,8 @@ def edit_case():
                                          },
                           })
     _data2 = {'num': _data.num, 'name': _data.name, 'desc': _data.desc, 'cases': case_data, 'setId': _data.case_set_id,
-              'func_address': json.loads(_data.func_address), 'times': _data.times, 'environment': _data.environment
-        , 'project_id': _data.project_id, 'status_url': _data.status_url}
+              'func_address': json.loads(_data.func_address), 'times': _data.times, 'client': _data.client,
+              'environment': _data.environment, 'project_id': _data.project_id, 'status_url': _data.status_url}
     if _data.variable:
         _data2['variable'] = json.loads(_data.variable)
     else:

@@ -1,5 +1,5 @@
 <template>
-    <div class="wiki" v-loading="this.loading">
+    <div class="wikiManage" v-loading="this.loading">
         <el-form :inline="true" class="demo-form-inline search-style" size="small">
             <el-form-item label="文档名称">
                 <el-input placeholder="请输入" v-model="form.wikiName" clearable style="width: 150px">
@@ -7,7 +7,9 @@
             </el-form-item>
             <el-form-item>
                 <el-button type="primary" icon="el-icon-search" @click.native="handleCurrentChange(1)">搜索</el-button>
-                <el-button type="primary" @click.native="initData()">新建文档</el-button>
+                <el-button type="primary" @click.native="initData()" v-if="role == '2' || auth.others_wiki_add">
+                    新建文档
+                </el-button>
             </el-form-item>
         </el-form>
         <el-tabs v-model="numTab" class="table_padding" @tab-click="tabChange">
@@ -17,7 +19,8 @@
                             style="border:1px solid;border-color: #ffffff rgb(234, 234, 234) #ffffff #ffffff;">
                         <el-row>
                             <el-col style="border:1px solid;border-color: #ffffff #ffffff rgb(234, 234, 234) #ffffff;padding:2px">
-                                <el-dropdown @command="moduleCommand" style="float:right;">
+                                <el-dropdown @command="moduleCommand" style="float:right;"
+                                             v-if="role == '2' || auth.others_wiki_todo">
                                       <span class="el-dropdown-link" style="color: #4ae2d5">
                                         操作<i class="el-icon-arrow-down el-icon--right"></i>
                                       </span>
@@ -80,6 +83,10 @@
                                     label="创建人">
                             </el-table-column>
                             <el-table-column
+                                    prop="update_time"
+                                    label="最近更新">
+                            </el-table-column>
+                            <el-table-column
                                     label="操作">
                                 <template slot-scope="scope">
                                     <el-button type="primary" icon="el-icon-view" size="mini"
@@ -87,11 +94,13 @@
                                         查看
                                     </el-button>
                                     <el-button type="primary" icon="el-icon-edit" size="mini"
-                                               @click.native="editCopyWikiApi(wikiTableData[scope.$index]['wikiId'],'edit')">
+                                               @click.native="editCopyWikiApi(wikiTableData[scope.$index]['wikiId'],'edit')"
+                                               v-if="role == '2' || auth.others_wiki_edit">
                                         编辑
                                     </el-button>
                                     <el-button type="danger" icon="el-icon-delete" size="mini"
-                                               @click.native="sureView(delApi,wikiTableData[scope.$index]['wikiId'],wikiTableData[scope.$index]['name'])">
+                                               @click.native="sureView(delApi,wikiTableData[scope.$index]['wikiId'],wikiTableData[scope.$index]['name'])"
+                                               v-if="role == '2' || auth.others_wiki_del">
                                         删除
                                     </el-button>
                                 </template>
@@ -110,7 +119,7 @@
                     </el-col>
                 </el-row>
             </el-tab-pane>
-            <el-tab-pane label="文档编辑" name="second" v-show="wikiEditViewStatus"
+            <el-tab-pane label="文档编辑" name="second" v-if="wikiEditViewStatus"
                          style="min-height: 760px">
                 <wikiEdit
                         :projectId="form.projectId"
@@ -198,13 +207,18 @@
                         num: '',
                     },
                     projectId: -1,
-                    apiName: null,
+                    wikiName: null,
                 },
-                features: 'DocLib'
+                features: 'DocLib',
+                role: '',
+                auth: '',
             }
         },
         methods: {
             initBaseData() {
+                this.role = this.$store.state.roles;
+                this.auth = JSON.parse(this.$store.state.auth);
+
                 this.form.module = {name: null, moduleId: null,};
                 this.modulePage.currentPage = 1;
                 this.wikiPage.currentPage = 1;

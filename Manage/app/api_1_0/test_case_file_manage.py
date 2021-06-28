@@ -4,7 +4,6 @@ from app.models import *
 from flask_login import current_user
 from ..util.utils import *
 from ..util.global_variable import *
-import json
 
 
 @api.route('/testCaseFile/add', methods=['POST'])
@@ -16,6 +15,11 @@ def add_test_case_file():
     higher_id = data.get('higherId')
     status = data.get('status')
     ids = data.get('id')
+
+    file_type = 'x'
+    if data.get('fileType'):
+        file_type = data.get('fileType')
+
     if not name:
         return jsonify({'msg': '名称不能为空', 'status': 0})
     num = auto_num(data.get('num'), CaseSet)
@@ -24,17 +28,22 @@ def add_test_case_file():
         old_data.name = name
         old_data.num = num
         old_data.higher_id = higher_id
+        old_data.file_type = file_type
         db.session.commit()
         return jsonify({'msg': '修改成功', 'status': 1})
     else:
-
-        _new = TestCaseFile(name=name, higher_id=higher_id, num=num, status=status, user_id=current_user.id)
+        _new = TestCaseFile(name=name, higher_id=higher_id, num=num, status=status, user_id=current_user.id,
+                            file_type=file_type)
         db.session.add(_new)
         db.session.commit()
         if status == 1:
             with open('{}{}.txt'.format(TEST_FILE_ADDRESS, _new.id), 'w', encoding='utf-8') as f:
-                f.write(
-                    """{"root":{"data":{"id":"byqb16f7t8o0","created":1574819812654,"text":"中心主题","priority":null,"font-family":"黑体, SimHei","font-size":32,"progress":null},"children":[]},"template":"right","theme":"fresh-blue","version":"1.4.43"}""")
+                if file_type == 'x':
+                    f.write(
+                        """{"root":{"data":{"id":"byqb16f7t8o0","created":1574819812654,"text":"中心主题","priority":null,"font-family":"黑体, SimHei","font-size":32,"progress":null},"children":[]},"template":"right","theme":"fresh-blue","version":"1.4.43"}""")
+                else:
+                    f.write(
+                        """[{"name": "Sheet1", "color": "", "index": 1, "status": 1, "order": 1, "celldata": [], "config": {}}]""")
         return jsonify({'msg': '新建成功', 'status': 1, 'id': _new.id, 'higher_id': _new.higher_id, })
 
 
@@ -46,7 +55,11 @@ def find_test_case_file():
     data = request.json
     privates = data.get('privates')
 
-    kwargs = {'higher_id': 0}
+    file_type = 'x'
+    if data.get('fileType'):
+        file_type = data.get('fileType')
+
+    kwargs = {'higher_id': 0, 'file_type': file_type}
     if privates:
         kwargs['user_id'] = current_user.id
 
@@ -92,6 +105,10 @@ def save_test_case_file():
     _data = data.get('data')
     show = data.get('show')
     ids = data.get('ids')
+
+    if _data is None or _data == '':
+        return jsonify({'status': 0, 'mag': '保存内容为空'})
+
     with open('{}{}.txt'.format(TEST_FILE_ADDRESS, ids), 'w', encoding='utf-8') as f:
         f.write(_data)
     if show:
@@ -109,13 +126,16 @@ def del_test_case_file():
     ids = data.get('id')
     _edit = TestCaseFile.query.filter_by(id=ids).first()
     case = TestCaseFile.query.filter_by(higher_id=ids).first()
-    print(current_user.id)
-    print(_edit.user_id)
     if current_user.id != _edit.user_id:
-        print(2234)
         return jsonify({'msg': '不能删除别人创建的', 'status': 0})
     if case:
         return jsonify({'msg': '请先删除该文件的下级内容', 'status': 0})
+
+    if _edit.status == 1:
+        if not os.path.exists('{}{}.txt'.format(TEST_FILE_ADDRESS, ids)):
+            return jsonify({'msg': '文件名不存在', 'status': 0})
+        else:
+            os.remove('{}{}.txt'.format(TEST_FILE_ADDRESS, ids))
 
     db.session.delete(_edit)
     return jsonify({'msg': '删除成功', 'status': 1})

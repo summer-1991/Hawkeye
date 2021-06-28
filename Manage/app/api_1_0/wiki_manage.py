@@ -39,6 +39,7 @@ def find_wiki():
                  'name': c.name,
                  'desc': c.desc,
                  'user_id': c.user_id,
+                 'update_time': str(c.update_time),
                  'create_by': User.query.filter_by(id=c.user_id).first().name,
                  'annex_name': c.annex_name,
                  'auth': c.auth,

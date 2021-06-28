@@ -38,7 +38,7 @@
                     </el-form-item>
 
                     <el-form-item label="集合选择" :label-width="caseData.formLabelWidth">
-                        <el-select v-model="caseData.setId" placeholder="请选择用例集" value-key="id"
+                        <el-select v-model="caseData.setId" filterable placeholder="请选择用例集" value-key="id"
                                    style="width: 150px">
                             <el-option
                                     v-for="item in allSetList[caseData.projectId]"
@@ -90,6 +90,18 @@
                             </el-option>
                         </el-select>
 
+                        <el-select v-model="caseData.clientId"
+                                   filterable size="small"
+                                   style="width: 150px;padding-right:5px">
+                            <el-option
+                                    v-for="(item) in clientDataList"
+                                    :key="item"
+                                    :label="item"
+                                    :value="item"
+                            >
+                            </el-option>
+                        </el-select>
+
                         <el-select v-model="caseData.funcAddress" multiple placeholder="请选择导入函数文件" size="small">
                             <el-option
                                     v-for="item in this.funcAddress"
@@ -106,6 +118,9 @@
                                    @click="addConfigVariable()">添加变量
                         </el-button>
                     </el-form-item>
+                    <el-tooltip style="margin-left: 10px" content="全局变量有：环境(E),执行第几次(OT),可以供后面引用(如：$E)">
+                        <div class="my-icon-cuowu"></div>
+                    </el-tooltip>
                 </el-form>
                 <hr style="height:1px;border:none;border-top:1px solid rgb(241, 215, 215);margin-top: -5px"/>
                 <el-table :data="caseData.variable"
@@ -410,7 +425,7 @@
             apiMsgDataEdit,
         },
         name: 'sceneEdit',
-        props: ['proModelData', 'projectId', 'allSetList', 'configData', 'funcAddress', 'proAndIdData', 'currentSetId', 'baseUrlData'],
+        props: ['proModelData', 'projectId', 'allSetList', 'configData', 'funcAddress', 'proAndIdData', 'currentSetId', 'baseUrlData', 'clientDataList'],
         data() {
             return {
                 checkAll: false,
@@ -452,12 +467,13 @@
                     times: '',
                     name: '',
                     environment: '',
+                    clientId: "1012",
                     status_url: null,
                     formLabelWidth: '70px',
                     apiCases: [],// 执行步骤里面的所有接口信息
                 },
                 configShow: false,
-                environmentList: ['测试环境', '开发环境', '预发环境', '线上环境'],
+                environmentList: ['测试环境', '预发环境', '灰度/正式环境'],
                 currentUrlData: Array(),
             }
         },
@@ -550,6 +566,7 @@
                 this.caseData.times = '';
                 this.caseData.desc = '';
                 this.caseData.id = '';
+                this.caseData.clientId = '1012';
                 this.caseData.environment = '';
                 this.caseData.status_url = null;
                 this.caseData.funcAddress = Array();
@@ -586,6 +603,7 @@
                             this.caseData.num = response.data['data']['num'];
                         }
                         this.caseData.modelFormVisible = true;
+                        this.caseData.clientId = response.data['data']['client'];
                         this.caseData.environment = this.environmentList[response.data['data']['environment']];
                         this.currentUrlData = Array();
                         if (response.data['data']['environment'] != -1) {
@@ -776,7 +794,7 @@
                     });
                     return
                 }
-                if(this.caseData.environment != '' && this.form.choiceUrl == ''){
+                if (this.caseData.environment != '' && this.form.choiceUrl == '') {
                     this.$message({
                         showClose: true,
                         message: '选择了环境必须选择url',
@@ -802,6 +820,7 @@
                     'caseSetId': this.caseData.setId,
                     'desc': this.caseData.desc,
                     'status_url': this.currentUrlData.indexOf(this.form.choiceUrl),
+                    'clientId': this.caseData.clientId,
                     'environment': this.environmentList.indexOf(this.caseData.environment),
                     'funcAddress': this.caseData.funcAddress,
                     'variable': JSON.stringify(this.caseData.variable),

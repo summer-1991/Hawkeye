@@ -250,6 +250,12 @@
                 :visible.sync="caseRunStatus"
                 :before-close="handleClose"
                 :size="'40%'">
+            <el-button-group style="position: absolute;top: 17px;right: 60px;">
+                <el-button type="primary" icon="el-icon-arrow-left" round size="mini"
+                           @click="switchTaskManualCase('pre')"></el-button>
+                <el-button type="primary" round size="mini" @click="switchTaskManualCase('next')"><i
+                        class="el-icon-arrow-right el-icon--right"></i></el-button>
+            </el-button-group>
             <div>
                 <table border="1" cellspacing="0" cellpadding="0" style="width: 95%;margin: 10px;table-layout: fixed">
                     <tr>
@@ -368,8 +374,10 @@
                     createBy: '',
                     caseType: '',
                 },
+                previousId: 0,
+                nextId: 0,
                 caseTypeList: ['最高', '较高', '一般', '较低', '最低'],
-                resultList: ['未执行', '成功', '失败', '阻塞','N/A'],
+                resultList: ['未执行', '成功', '失败', '阻塞', 'N/A'],
                 features: 'ManualTask',
             }
         },
@@ -413,6 +421,7 @@
                     });
                     return
                 }
+                this.caseSearchPage.total = 1;
                 this.caseSearchPage.currentPage = 1;
                 this.searchForm.manualSet = '';
                 this.searchForm.caseName = null;
@@ -464,6 +473,7 @@
                 }
 
                 this.$axios.post(this.$api.searchCaseApi, {
+                    'taskId': this.form.module.moduleId,
                     'manualSet': this.searchForm.manualSet,
                     'caseName': this.searchForm.caseName,
                     'createBy': this.searchForm.createBy,
@@ -507,19 +517,46 @@
             runCaseApi(taskCaseId, caseName) {
                 this.caseRunStatus = true;
                 this.$axios.post(this.$api.runManualCaseApi, {
-                    'taskCaseId': taskCaseId
+                    'taskCaseId': taskCaseId,
+                    'taskId': this.form.module.moduleId
                 }).then((response) => {
                         if (this.messageShow(this, response)) {
-                            this.dialogTitle = caseName;
+                            this.dialogTitle = response.data['data']['name'];
                             this.runCaseData.id = response.data['data']['id'];
                             this.runCaseData.precondition = response.data['data']['precondition'];
                             this.runCaseData.steps = response.data['data']['steps'];
                             this.runCaseData.expect = response.data['data']['expect'];
                             this.runCaseData.runRes = this.resultList[response.data['data']['lastRes']];
                             this.runCaseData.runDesc = response.data['data']['runDesc'];
+                            this.previousId = response.data['previous_id'];
+                            this.nextId = response.data['next_id'];
                         }
                     }
                 )
+            },
+            switchTaskManualCase(type) {
+                if (type == "pre") {
+                    if (this.previousId == 0) {
+                        this.$message({
+                            showClose: true,
+                            message: '已经是第一条了！',
+                            type: 'warning',
+                        });
+                        return
+                    }
+                    this.runCaseApi(this.previousId, "")
+                }
+                else {
+                    if (this.nextId == 0) {
+                        this.$message({
+                            showClose: true,
+                            message: '已经是最后一条了！',
+                            type: 'warning',
+                        });
+                        return
+                    }
+                    this.runCaseApi(this.nextId, "")
+                }
             },
             updateRunCaseApi() {
                 if (this.runCaseData.length > 1) {

@@ -26,6 +26,9 @@ const registerApi = '/api/register';
 const addRoleApi = '/api/addRole';
 const delRoleApi = '/api/delRole';
 const changePasswordApi = '/api/changePassword';
+const findRoleApi = '/api/role/find';
+const addAuthApi = '/api/auth/add';
+const findAuthApi = '/api/auth/find';
 
 const findApiApi = '/api/apiMsg/find';
 const delApiApi = '/api/apiMsg/del';
@@ -104,6 +107,11 @@ const findGanttTask = '/api/gantt/find';
 const updateGanttTask = '/api/gantt/update';
 const delGanttTask = '/api/gantt/del';
 
+const addResourceApi = '/api/resource/add';
+const findResourceApi = '/api/resource/find';
+const editResourceApi = '/api/resource/edit';
+const delResourceApi = '/api/resource/del';
+
 export default {
     addTestCaseFileApi,
     findTestCaseFileApi,
@@ -172,6 +180,9 @@ export default {
     addRoleApi,
     delRoleApi,
     changePasswordApi,
+    findRoleApi,
+    addAuthApi,
+    findAuthApi,
 
     findApiApi,
     delApiApi,
@@ -209,4 +220,9 @@ export default {
     findGanttTask,
     updateGanttTask,
     delGanttTask,
+
+    addResourceApi,
+    findResourceApi,
+    editResourceApi,
+    delResourceApi,
 }

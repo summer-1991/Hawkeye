@@ -4,6 +4,7 @@ export const state = {
     token: null,
     title: '',
     roles: null,
+    auth: null,
 
 
     count: 2,

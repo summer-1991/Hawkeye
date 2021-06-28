@@ -20,6 +20,7 @@ class Role(db.Model):
     __tablename__ = 'role'
     id = db.Column(db.Integer, primary_key=True, comment='主键，自增')
     name = db.Column(db.String(30), unique=True, comment='角色名称')
+    auth = db.Column(db.Text(), comment='权限配置')
     users = db.relationship('User', back_populates='role')
     permission = db.relationship('Permission', secondary=roles_permissions, back_populates='role')
 
@@ -167,6 +168,7 @@ class Case(db.Model):
     times = db.Column(db.Integer(), nullable=True, comment='执行次数')
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), comment='所属的项目id')
     case_set_id = db.Column(db.Integer, db.ForeignKey('case_set.id'), comment='所属的用例集id')
+    client = db.Column(db.String(10), comment='选择的租户id')
     environment = db.Column(db.Integer(), comment='环境类型')
     status_url = db.Column(db.String(32), nullable=True, comment='基础url,序号对应项目的环境')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
@@ -197,6 +199,7 @@ class ApiMsg(db.Model):
     project_id = db.Column(db.Integer, nullable=True, comment='所属的项目id')
     created_time = db.Column(db.DateTime, index=True, default=datetime.now)
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
+    client = db.Column(db.String(10), comment='选择的租户id')
     sig = db.Column(db.Integer(), nullable=True, default=0, comment='加签方式')
 
 
@@ -254,6 +257,7 @@ class Task(db.Model):
     environment = db.Column(db.Integer(), comment='环境类型')
     url_index = db.Column(db.Integer(), comment='选择的url的index')
     status_url = db.Column(db.String(100), comment='基础url')
+    client = db.Column(db.String(10), comment='租户id')
     created_time = db.Column(db.DateTime(), default=datetime.now, comment='任务的创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
 
@@ -267,6 +271,7 @@ class TestCaseFile(db.Model):
     status = db.Column(db.Integer(), comment='0代表文件夹；1代表用例文件')
     higher_id = db.Column(db.Integer(), comment='上级id，父级为0')
     user_id = db.Column(db.Integer(), comment='创建人id')
+    file_type = db.Column(db.String(1), comment='创建人id')
 
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
@@ -381,6 +386,19 @@ class GanttLink(db.Model):
     source = db.Column(db.Integer(), comment='上一节点id')
     target = db.Column(db.Integer(), comment='下一节点id')
     type = db.Column(db.String(1), comment='样式')
+
+    created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
+    update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)
+
+
+class TestResource(db.Model):
+    __tablename__ = 'test_resource'
+    id = db.Column(db.Integer(), primary_key=True, comment='主键，自增')
+    name = db.Column(db.String(30), comment='型号/名称')
+    desc = db.Column(db.String(200), comment='描述')
+    version = db.Column(db.String(50), comment='版本')
+    borrower = db.Column(db.String(10), comment='借用人')
+    type = db.Column(db.Integer(), comment='资源类型')
 
     created_time = db.Column(db.DateTime, index=True, default=datetime.now, comment='创建时间')
     update_time = db.Column(db.DateTime, index=True, default=datetime.now, onupdate=datetime.now)

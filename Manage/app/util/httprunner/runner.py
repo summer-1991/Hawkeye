@@ -1,10 +1,12 @@
 # encoding: utf-8
 import time
+import hashlib
 from unittest.case import SkipTest
 
 from . import exceptions, logger, response, utils
 from .client import HttpSession
 from .context import SessionContext
+from app.models import CommonConfig
 
 
 class Runner(object):
@@ -147,7 +149,7 @@ class Runner(object):
                     )
                 )
 
-                if var_name.find("session_") == 0:
+                if var_name.find("S_") == 0:
                     action[var_name] = hook_content_eval
                     self.session_context.update_session_variables(action)
                 else:
@@ -217,6 +219,11 @@ class Runner(object):
         raw_request = test_dict.get('request', {})
         parsed_test_request = self.session_context.eval_content(raw_request)
         self.session_context.update_test_variables("request", parsed_test_request)
+
+        request_params = parsed_test_request.get('params')
+        if 'need_sig' in request_params:
+            self.param_md5(request_params)
+            del request_params['need_sig']
 
         try:
             url = parsed_test_request.pop('url')
@@ -391,3 +398,30 @@ class Runner(object):
 
         utils.print_info(output)
         return output
+
+    def param_md5(self, param):
+        if not param.get('clientid'):
+            client_id = 1012
+            param['clientid'] = client_id
+        else:
+            client_id = param['clientid']
+
+        if not param.get('timestamp'):
+            timestamp = int(time.time())
+            param['timestamp'] = str(timestamp)
+        else:
+            timestamp = param['timestamp']
+
+        client_key = ''
+        client_enum = CommonConfig.query.filter_by(c_key=client_id, c_type='client').first()
+        if client_enum:
+            client_key = client_enum.c_value
+        original_str = client_key + str(timestamp)
+
+        md5 = hashlib.md5()
+        b = original_str.encode(encoding='UTF-8')
+        md5.update(b)
+        str_md5 = md5.hexdigest()
+
+        param['sig'] = str_md5
+        return param

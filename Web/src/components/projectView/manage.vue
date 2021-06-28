@@ -39,10 +39,28 @@
                             </template>
                             <el-menu-item-group>
                                 <el-menu-item index="/manage/projectManage">项目管理</el-menu-item>
-                                <el-menu-item index="/manage/sceneConfig">内置函数</el-menu-item>
-                                <el-menu-item index="/manage/buildInFunc">函数文件</el-menu-item>
-                                <el-menu-item index="/manage/caseManage">API用例</el-menu-item>
-                                <el-menu-item index="/manage/sceneManage">业务用例</el-menu-item>
+                                <el-menu-item index="/manage/sdkManage"
+                                              v-if="role == '2' || auth.api_sdk">SDK配置
+                                </el-menu-item>
+                                <el-menu-item index="/manage/sceneConfig"
+                                              v-if="role == '2' || auth.api_config">项目函数
+                                </el-menu-item>
+                                <el-menu-item index="/manage/buildInFunc"
+                                              v-if="role == '2' || auth.api_func">函数文件
+                                </el-menu-item>
+                                <el-menu-item index="/manage/caseManage"
+                                              v-if="role == '2' || auth.api_api">API用例
+                                </el-menu-item>
+                                <el-menu-item index="/manage/sceneManage"
+                                              v-if="role == '2' || auth.api_scene">业务用例
+                                </el-menu-item>
+                                <el-menu-item index="/manage/taskManage"
+                                              v-if="role == '2' || auth.api_task">定时任务
+                                </el-menu-item>
+                                <el-menu-item index="/manage/reportManage"
+                                              v-if="role == '2' || auth.api_report">
+                                    测试报告
+                                </el-menu-item>
                             </el-menu-item-group>
                         </el-submenu>
                         <el-submenu index="2">
@@ -50,23 +68,28 @@
                                 <i class="el-icon-edit"></i>
                                 <span>功能测试</span>
                             </template>
-                            <el-menu-item-group>
+                            <el-menu-item-group v-if="role == '2' || auth.manual_case">
                                 <el-menu-item index="/manage/manualSet">功能用例</el-menu-item>
                                 <el-menu-item index="/manage/manualTask">测试任务</el-menu-item>
+                                <el-menu-item index="">
+                                    <div @click.prevent="goToEditExcelFile">
+                                        Excel用例
+                                    </div>
+                                </el-menu-item>
                             </el-menu-item-group>
                         </el-submenu>
-                        <el-submenu index="3">
-                            <template slot="title">
-                                <i class="el-icon-time"></i>
-                                <span>报告管理</span>
-                            </template>
-                            <el-menu-item-group>
-                                <el-menu-item index="/manage/reportManage">测试报告</el-menu-item>
-                            </el-menu-item-group>
-                            <el-menu-item-group>
-                                <el-menu-item index="/manage/taskManage">定时任务</el-menu-item>
-                            </el-menu-item-group>
-                        </el-submenu>
+                        <!--<el-submenu index="3">-->
+                        <!--<template slot="title">-->
+                        <!--<i class="el-icon-time"></i>-->
+                        <!--<span>报告管理</span>-->
+                        <!--</template>-->
+                        <!--<el-menu-item-group>-->
+                        <!--<el-menu-item index="/manage/reportManage">测试报告</el-menu-item>-->
+                        <!--</el-menu-item-group>-->
+                        <!--<el-menu-item-group>-->
+                        <!--<el-menu-item index="/manage/taskManage">定时任务</el-menu-item>-->
+                        <!--</el-menu-item-group>-->
+                        <!--</el-submenu>-->
 
                         <el-submenu index="5">
                             <template slot="title">
@@ -75,23 +98,28 @@
                             </template>
                             <el-menu-item-group>
                                 <!--<el-menu-item index="/manage/testTool">小工具</el-menu-item>-->
-                                <el-menu-item index="/manage/wikiManage">文档库</el-menu-item>
                                 <el-menu-item index="/manage/ganttModel">甘特图</el-menu-item>
-                                <el-menu-item>
-                                    <div @click.prevent="goToEditTestCaseFile">脑图</div>
+                                <el-menu-item index="/manage/wikiManage"
+                                              v-if="role == '2' || auth.others_wiki">文档库
+                                </el-menu-item>
+                                <el-menu-item index="/manage/testResource"
+                                              v-if="role == '2' || auth.others_resources">测试资源
+                                </el-menu-item>
+                                <el-menu-item index="" v-if="role == '2' || auth.others_mind">
+                                    <div @click.prevent="goToEditTestCaseFile">
+                                        脑图
+                                    </div>
                                 </el-menu-item>
                             </el-menu-item-group>
                         </el-submenu>
 
-                        <el-submenu index="4" v-show="role === '2'">
+                        <el-submenu index="4" v-if="role === '2'">
                             <template slot="title">
                                 <i class="el-icon-setting"></i>
                                 <span>系统管理</span>
                             </template>
                             <el-menu-item-group>
                                 <el-menu-item index="/manage/userManage">用户&权限</el-menu-item>
-                                <el-menu-item index="/manage/sysManage">后台配置</el-menu-item>
-
                                 <!--<el-menu-item index="/manage/batch">批量添加</el-menu-item>-->
                             </el-menu-item-group>
                         </el-submenu>
@@ -148,7 +176,7 @@
                 collapsed: false,
                 role: '',
                 userName: '',
-
+                auth: '',
             }
         },
         methods: {
@@ -159,9 +187,14 @@
                 let {href} = this.$router.resolve({path: '/testCaseEdit'});
                 window.open(href, '_blank');
             },
+            goToEditExcelFile: function () {
+                let {href} = this.$router.resolve({path: '/excelCaseEdit'});
+                window.open(href, '_blank');
+            },
             closeNavigation() {
                 this.role = this.$store.state.roles;
                 this.userName = this.$store.state.userName;
+                this.auth = JSON.parse(this.$store.state.auth);
 
                 this.navigationName = this.$route.path;
                 if (this.$route.path === '/manage/reportShow') {

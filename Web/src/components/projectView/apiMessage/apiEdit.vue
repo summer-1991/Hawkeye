@@ -17,7 +17,7 @@
                 </el-select>
 
                 <el-select v-model="form.moduleId"
-                           placeholder="请选择模块"
+                           filterable placeholder="请选择模块"
                            size="small"
                            style="width: 200px;padding-right:10px">
                     <el-option
@@ -44,7 +44,7 @@
                            clearable placeholder="请选择url"
                            size="small">
                     <el-option
-                            v-for="item in curernturlData"
+                            v-for="item in currentUrlData"
                             :key="item"
                             :label="item"
                             :value="item"
@@ -72,6 +72,35 @@
 
         </el-form>
         <el-form :inline="true">
+            <el-form-item label="ClientID" prop="name" labelWidth="80px" style="margin-bottom: 5px">
+                <el-select v-model="apiMsgData.clientId"
+                           filterable size="small"
+                           style="width: 200px;">
+                    <el-option
+                            v-for="(item) in clientList"
+                            :key="item"
+                            :label="item"
+                            :value="item"
+                    >
+                    </el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item prop="name" style="margin-bottom: 5px">
+                <el-select v-model="apiMsgData.sig"
+                           clearable placeholder="请选择加签方式"
+                           size="small"
+                           style="width: 200px;">
+                    <el-option
+                            v-for="item in sigList"
+                            :key="item"
+                            :label="item"
+                            :value="item"
+                    >
+                    </el-option>
+                </el-select>
+            </el-form-item>
+        </el-form>
+        <el-form :inline="true">
             <el-form-item label="高级功能" prop="name" labelWidth="80px" style="margin-bottom: 5px">
 
                 <el-input v-model="apiMsgData.upFunc" placeholder="set_up_hooks" size="small">
@@ -85,19 +114,6 @@
             <el-form-item prop="name" style="margin-bottom: 5px">
                 <el-input v-model="apiMsgData.skip" placeholder="跳过判断，True跳过该请求" size="small">
                 </el-input>
-            </el-form-item>
-            <el-form-item prop="name" style="margin-bottom: 5px">
-                <el-select v-model="apiMsgData.sig"
-                           clearable placeholder="请选择加签方式"
-                           size="small">
-                    <el-option
-                            v-for="item in sigList"
-                            :key="item"
-                            :label="item"
-                            :value="item"
-                    >
-                    </el-option>
-                </el-select>
             </el-form-item>
         </el-form>
         <hr style="height:1px;border:none;border-top:1px solid rgb(241, 215, 215);margin-top: -5px"/>
@@ -125,13 +141,15 @@
                         Params
                     </el-button>
                 </el-input>
-                <el-button type="primary"
-                           @click.native="saveAndRun()"
-                           size="medium"
-                           :loading="this.saveRunStatus"
-                >Send
-                </el-button>
-                <el-button type="primary" @click.native="addApiMsg()" size="medium">Save</el-button>
+                <el-tooltip class="item" effect="dark" content="只请求不保存！" placement="bottom">
+                    <el-button type="primary"
+                               @click.native="apiRun()"
+                               size="medium"
+                               :loading="this.saveRunStatus"
+                    >请求
+                    </el-button>
+                </el-tooltip>
+                <el-button type="primary" @click.native="addApiMsg()" size="medium">保存</el-button>
             </el-form-item>
         </el-form>
 
@@ -429,7 +447,7 @@
             errorView: errorView,
         },
         name: 'apiEdit',
-        props: ['proAndIdData', 'projectId', 'proUrlData', 'configData', 'proModelData', 'moduleId', 'baseUrlData'],
+        props: ['proAndIdData', 'projectId', 'proUrlData', 'configData', 'proModelData', 'moduleId', 'baseUrlData', 'clientList'],
         data() {
             return {
                 bodyShow: 'second',
@@ -474,10 +492,12 @@
                     extract: Array(),
                     validate: Array(),
                     sig: '',
+                    clientId: "1012",
                 },
-                environmentList: ['测试环境', '开发环境', '预发环境', '线上环境','GM测试','GM正式'],
+                environmentList: ['测试环境', '预发环境', '灰度/正式环境', 'GM测试', 'GM预发'],
                 sigList: ['clientid_时间戳_md5'],
-                curernturlData: Array(),
+                currentUrlData: Array(),
+                apiRequestData: Object(),
             }
         },
         methods: {
@@ -496,16 +516,16 @@
                 this.form.choiceUrl = '';
                 var index = this.environmentList.indexOf(this.apiMsgData.environment);
                 if (index != -1) {
-                    this.curernturlData = this.baseUrlData[this.form.projectId][index];
+                    this.currentUrlData = this.baseUrlData[this.form.projectId][index];
                 }
             },
             changeEnvChoice() {
-                this.curernturlData = Array();
+                this.currentUrlData = Array();
                 if (this.form.projectId != null) {
                     this.form.choiceUrl = '';
                     var index = this.environmentList.indexOf(this.apiMsgData.environment);
                     if (index != -1) {
-                        this.curernturlData = this.baseUrlData[this.form.projectId][index];
+                        this.currentUrlData = this.baseUrlData[this.form.projectId][index];
                     }
                 }
             },
@@ -588,10 +608,11 @@
                 this.apiMsgData.url = String();
                 this.apiMsgData.environment = '';
                 this.apiMsgData.sig = '';
+                this.apiMsgData.clientId = '1012';
                 this.form.projectId = this.projectId;
                 this.form.moduleId = this.moduleId;
 
-                this.curernturlData = Array();
+                this.currentUrlData = Array();
                 this.form.choiceUrl = null;
             },
             addApiMsg(messageClose = false) {
@@ -623,8 +644,9 @@
                     'num': this.apiMsgData.num,
                     // 'choiceUrl': this.form.choiceUrl,
                     'environment': this.environmentList.indexOf(this.apiMsgData.environment),
+                    'clientId': this.apiMsgData.clientId,
                     'sig': this.sigList.indexOf(this.apiMsgData.sig),
-                    'choiceUrl': this.curernturlData.indexOf(this.form.choiceUrl),
+                    'choiceUrl': this.currentUrlData.indexOf(this.form.choiceUrl),
                     'variableType': this.form.choiceType,
                     'desc': this.apiMsgData.desc,
                     'funcAddress': this.apiMsgData.funcAddress,
@@ -696,34 +718,58 @@
                         this.apiMsgData.validate = response.data['data']['validate'];
                         this.apiMsgData.method = response.data['data']['method'];
                         this.apiMsgData.environment = this.environmentList[response.data['data']['environment']];
+                        this.apiMsgData.clientId = response.data['data']['client'];
                         this.apiMsgData.sig = this.sigList[response.data['data']['sig']];
 
-                        this.curernturlData = Array();
+                        this.currentUrlData = Array();
                         if (response.data['data']['environment'] != -1) {
-                            this.curernturlData = this.baseUrlData[this.projectId][response.data['data']['environment']];
+                            this.currentUrlData = this.baseUrlData[this.projectId][response.data['data']['environment']];
                         }
-                        this.form.choiceUrl = this.curernturlData[response.data['data']['status_url']];
+                        this.form.choiceUrl = this.currentUrlData[response.data['data']['status_url']];
                         this.form.projectId = this.projectId;
                         this.form.moduleId = this.moduleId;
                     }
                 );
             },
-            saveAndRun() {
-                //  保存并执行接口
-                this.addApiMsg(true).then(res => {
-                    //  先判断保存是否成功，再决定是否执行接口
-                    if (res.data['status'] === 0) {
-                        this.$message({
-                            showClose: true,
-                            message: res.data['msg'],
-                            type: 'warning',
-                        });
-                    } else {
-                        this.apiMsgData.id = res.data['api_msg_id'];
-                        this.apiMsgData.num = res.data['num'];
-                        this.$emit('apiTest', [{'apiMsgId': res.data['api_msg_id'], 'num': '1'}], false);
-                    }
-                });
+            apiRun() {
+                this.apiRequestData = {};
+                this.apiRequestData['projectId'] = this.form.projectId;
+                this.apiRequestData['moduleId'] = this.form.moduleId;
+                this.apiRequestData['num'] = 1;
+                this.apiRequestData['name'] = this.apiMsgData.name;
+                this.apiRequestData['desc'] = this.apiMsgData.desc;
+                this.apiRequestData['variableType'] = this.form.choiceType;
+                this.apiRequestData['environment'] = this.environmentList.indexOf(this.apiMsgData.environment);
+                this.apiRequestData['statusUrl'] = this.currentUrlData.indexOf(this.form.choiceUrl);
+                this.apiRequestData['upFunc'] = this.apiMsgData.upFunc;
+                this.apiRequestData['downFunc'] = this.apiMsgData.downFunc;
+                this.apiRequestData['method'] = this.apiMsgData.method;
+                this.apiRequestData['variable'] = JSON.stringify(this.apiMsgData.variable);
+                this.apiRequestData['jsonVariable'] = this.apiMsgData.jsonVariable;
+                this.apiRequestData['param'] = JSON.stringify(this.apiMsgData.param);
+                this.apiRequestData['url'] = this.apiMsgData.url;
+                this.apiRequestData['client'] = this.apiMsgData.clientId;
+                this.apiRequestData['skip'] = this.apiMsgData.skip;
+                this.apiRequestData['extract'] = JSON.stringify(this.apiMsgData.extract);
+                this.apiRequestData['header'] = JSON.stringify(this.apiMsgData.header);
+                this.apiRequestData['sig'] = this.sigList.indexOf(this.apiMsgData.sig);
+                this.apiRequestData['validate'] = JSON.stringify(this.apiMsgData.validate);
+                this.$emit('apiTest', [this.apiRequestData], 1);
+                // 保存并执行接口
+                // this.addApiMsg(true).then(res => {
+                //     //  先判断保存是否成功，再决定是否执行接口
+                //     if (res.data['status'] === 0) {
+                //         this.$message({
+                //             showClose: true,
+                //             message: res.data['msg'],
+                //             type: 'warning',
+                //         });
+                //     } else {
+                //         this.apiMsgData.id = res.data['api_msg_id'];
+                //         this.apiMsgData.num = res.data['num'];
+                //         this.$emit('apiTest', [{'apiMsgId': res.data['api_msg_id'], 'num': '1'}], false);
+                //     }
+                // });
             },
             resetLine() {
                 //  重置单元格高度

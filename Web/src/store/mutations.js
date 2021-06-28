@@ -24,6 +24,10 @@ export const mutations = {
     [types.TITLE]: (state, data) => {
         state.title = data;
     },
+    [types.AUTH]: (state, data) => {
+        localStorage.auth = data;
+        state.auth = data;
+    },
 
 
     changeDrag(state, bool) {

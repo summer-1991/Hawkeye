@@ -48,11 +48,24 @@ def edit_manual():
     """ 返回待编辑 """
     data = request.json
     case_id = data.get('caseId')
+    set_id = data.get('setId')
     _edit = ManualCase.query.filter_by(id=case_id).first()
+
+    _previous_edit = ManualCase.query.filter(ManualCase.id < case_id, ManualCase.module_id == set_id).order_by(
+        ManualCase.id.desc()).first()
+    _next_edit = ManualCase.query.filter(ManualCase.id > case_id, ManualCase.module_id == set_id).order_by(
+        ManualCase.id.asc()).first()
+    previous_id = 0
+    next_id = 0
+    if _next_edit:
+        next_id = _next_edit.id
+    if _previous_edit:
+        previous_id = _previous_edit.id
+
     _data = {'id': _edit.id, 'name': _edit.name, 'desc': _edit.desc, 'module_id': _edit.module_id,
              'case_type': _edit.case_type, 'precondition': _edit.precondition, 'steps': _edit.steps,
              'expect': _edit.expect}
-    return jsonify({'data': _data, 'status': 1})
+    return jsonify({'data': _data, 'status': 1, 'previous_id': previous_id, 'next_id': next_id})
 
 
 @api.route('/manual/add', methods=['POST'])
@@ -171,12 +184,13 @@ def del_manual_by_task():
 def find_search_case():
     """ 搜索用例信息 """
     data = request.json
+    task_id = data.get('taskId')
     case_name = data.get('caseName')
     case_type = data.get('caseType')
     create_by = data.get('createBy')
     manual_set = data.get('manualSet')
     page = data.get('page') if data.get('page') else 1
-    per_page = data.get('sizePage') if data.get('sizePage') else 3
+    per_page = data.get('sizePage') if data.get('sizePage') else 10
 
     filters = []
     if case_type:
@@ -190,6 +204,9 @@ def find_search_case():
 
     if case_name:
         filters.append(ManualCase.name.like('%{}%'.format(case_name)))
+
+    case_ids = [c.case_id for c in ManualTasksCases.query.filter_by(task_id=task_id)]
+    filters.append(ManualCase.id.notin_(set(case_ids)))
 
     if filters:
         _data = ManualCase.query.filter(*filters)
@@ -244,10 +261,26 @@ def edit_run_task_case():
         return jsonify({'data': {}, 'msg': '没有此用例', 'status': 0})
 
     if not run_res:
+        task_id = data.get('taskId')
         _run_case = ManualCase.query.filter_by(id=_run.case_id).first()
+
+        _previous_run_case = ManualTasksCases.query.filter(ManualTasksCases.id < task_case_id,
+                                                           ManualTasksCases.task_id == task_id).order_by(
+            ManualTasksCases.id.desc()).first()
+        _next_run_case = ManualTasksCases.query.filter(ManualTasksCases.id > task_case_id,
+                                                       ManualTasksCases.task_id == task_id).order_by(
+            ManualTasksCases.id.asc()).first()
+        previous_id = 0
+        next_id = 0
+        if _previous_run_case:
+            previous_id = _previous_run_case.id
+        if _next_run_case:
+            next_id = _next_run_case.id
+
         _data = {'precondition': _run_case.precondition, 'steps': _run_case.steps,
-                 'expect': _run_case.expect, 'lastRes': _run.last_res, 'runDesc': _run.desc, 'id': _run.id}
-        return jsonify({'data': _data, 'status': 1})
+                 'expect': _run_case.expect, 'lastRes': _run.last_res, 'runDesc': _run.desc, 'id': _run.id,
+                 'name': _run_case.name}
+        return jsonify({'data': _data, 'status': 1, 'previous_id': previous_id, 'next_id': next_id})
     else:
         _run.last_by = current_user.name
         _run.last_res = run_res
@@ -270,7 +303,7 @@ def import_case():
             file_name = file.filename
             file.save(os.path.join(FILE_ADDRESS, file_name))
             import_data = read_excel(os.path.join(FILE_ADDRESS, file_name))
-            #os.remove(os.path.join(FILE_ADDRESS, file_name))
+            # os.remove(os.path.join(FILE_ADDRESS, file_name))
     return jsonify({'data': import_data, 'msg': '数据读取成功！', 'status': 1})
 
 

@@ -278,6 +278,11 @@
                 )
             }
         },
+        watch: {
+            "$route": function () {
+                gantt.showDate(new Date());
+            }
+        },
         mounted() {
             this.initGantt();
             //console.log(gantt.getTaskCount());

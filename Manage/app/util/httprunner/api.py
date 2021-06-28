@@ -8,7 +8,7 @@ from . import (exceptions, loader, logger, parser, report, runner, utils, valida
 class HttpRunner(object):
 
     def __init__(self, failfast=False, save_tests=False, report_template=None, report_dir=None,
-        log_level="INFO", log_file=None):
+                 log_level="INFO", log_file=None):
         """ initialize HttpRunner.
 
         Args:
@@ -78,6 +78,7 @@ class HttpRunner(object):
                     # suppose one testcase should not have more than 9999 steps,
                     # and one step should not run more than 999 times.
                     test_method_name = 'test_{:04}_{:03}'.format(index, times_index)
+                    test_dict['variables']['IT'] = times_index
                     test_method = _add_test(test_runner, test_dict)
                     setattr(TestSequense, test_method_name, test_method)
 

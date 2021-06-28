@@ -97,7 +97,8 @@
                                        @click.native="downReport(tableData[scope.$index]['id'])">下载
                             </el-button>
                             <el-button type="danger" icon="el-icon-delete" size="mini"
-                                       @click.native="sureView(delReport, tableData[scope.$index]['id'],'该报告')">删除
+                                       @click.native="sureView(delReport, tableData[scope.$index]['id'],'该报告')"
+                                       v-show="role === '2' || auth.api_report_del">删除
                             </el-button>
                         </template>
                     </el-table-column>
@@ -144,6 +145,8 @@
                     },
 
                 },
+                role: '',
+                auth: '',
             }
         },
         methods: {
@@ -165,6 +168,9 @@
                 this.findReport()
             },
             initData() {
+                this.role = this.$store.state.roles;
+                this.auth = JSON.parse(this.$store.state.auth);
+
                 this.$axios.get(this.$api.baseDataApi).then((response) => {
 
                         this.proAndIdData = response.data['pro_and_id'];

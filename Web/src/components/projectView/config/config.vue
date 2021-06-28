@@ -20,7 +20,8 @@
                 <el-button type="primary" icon="el-icon-search" @click.native="configHandleCurrentChange(1)">
                     搜索
                 </el-button>
-                <el-button type="primary" @click.native="$refs.configEditFunc.initConfigData()">添加配置
+                <el-button type="primary" @click.native="$refs.configEditFunc.initConfigData()"
+                           v-if="role == '2' || auth.api_config_add">添加配置
                 </el-button>
             </el-form-item>
         </el-form>
@@ -45,11 +46,13 @@
                             min-width="250">
                         <template slot-scope="scope">
                             <el-button type="primary" icon="el-icon-edit" size="mini"
-                                       @click.native="$refs.configEditFunc.editSceneConfig(tableData[scope.$index]['id'])">
+                                       @click.native="$refs.configEditFunc.editSceneConfig(tableData[scope.$index]['id'])"
+                                       v-if="role == '2' || auth.api_config_edit">
                                 编辑
                             </el-button>
                             <el-button type="danger" icon="el-icon-delete" size="mini"
-                                       @click.native="sureView(delConfig,tableData[scope.$index]['id'],tableData[scope.$index]['name'])">
+                                       @click.native="sureView(delConfig,tableData[scope.$index]['id'],tableData[scope.$index]['name'])"
+                                       v-if="role == '2' || auth.api_config_del">
                                 删除
                             </el-button>
                         </template>
@@ -100,12 +103,17 @@
                     projectId: null,
                     configName: null,
                 },
+                tole: '',
+                auth: '',
             }
         },
 
 
         methods: {
             httpSend() {
+                this.role = this.$store.state.roles;
+                this.auth = JSON.parse(this.$store.state.auth);
+
                 this.$axios.get(this.$api.baseDataApi).then((response) => {
                         this.proAndIdData = response.data['pro_and_id'];
 

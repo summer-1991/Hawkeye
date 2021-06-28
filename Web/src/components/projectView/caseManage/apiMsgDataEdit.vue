@@ -12,20 +12,25 @@
             <el-tab-pane label="接口信息" style="margin-top: 10px">
                 <el-form>
                     <el-form-item label="用例名称" prop="name" label-width="120px">
-                        <el-input v-model="apiCaseData.name">
+                        <el-input v-model="apiCaseData.name" style="width: 90%">
                         </el-input>
                     </el-form-item>
                     <el-form-item label="set_up_hooks" label-width="120px">
-                        <el-input v-model="apiCaseData.upFunc">
+                        <el-input v-model="apiCaseData.upFunc" style="width: 90%">>
                         </el-input>
+                        <el-tooltip style="margin-left: 10px" content="{'S_xxx':'${fun(xxx)}'}赋值全局，多个hook用英文;分割">
+                            <div class="my-icon-cuowu"></div>
+                        </el-tooltip>
                     </el-form-item>
                     <el-form-item label="set_down_hooks" label-width="120px">
-                        <el-input v-model="apiCaseData.downFunc">
+                        <el-input v-model="apiCaseData.downFunc" style="width: 90%">>
                         </el-input>
+                        <el-tooltip style="margin-left: 10px" content="{'S_xxx':'${fun(xxx)}'}赋值全局，多个hook用英文;分割">
+                            <div class="my-icon-cuowu"></div>
+                        </el-tooltip>
                     </el-form-item>
-
                     <el-form-item label="跳过判断" label-width="120px">
-                        <el-input v-model="apiCaseData.skip">
+                        <el-input v-model="apiCaseData.skip" style="width: 90%">>
                         </el-input>
                     </el-form-item>
                 </el-form>

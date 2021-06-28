@@ -17,7 +17,8 @@
         data() {
             return {
                 editor: null,
-                info_: null
+                info_: null,
+                isChange: false,
             }
         },
         model: {
@@ -42,9 +43,10 @@
                 }
             },
             value: function (value) {
-                if (value !== this.editor.txt.html()) {
+                if (!this.isChange) {
                     this.editor.txt.html(this.value);
                 }
+                this.isChange = false;
             }
             //value为编辑框输入的内容，这里我监听了一下值，当父组件调用得时候，如果给value赋值了，子组件将会显示父组件赋给的值
         },
@@ -109,12 +111,13 @@
                         let data = result.data;
                         let data_len = data.length;
                         for (let i = 0; i < data_len; i++) {
-                            let url =window.location.origin + data[i];
+                            let url = window.location.origin + data[i];
                             insertImg(url);
                         }
                     }
                 };
                 this.editor.customConfig.onchange = (html) => {
+                    this.isChange = true;
                     this.info_ = html; // 绑定当前逐渐地值
                     this.$emit('change', this.info_) // 将内容同步到父组件中
                 };

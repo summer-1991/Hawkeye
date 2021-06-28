@@ -1,8 +1,8 @@
 <template>
-    <div class="buildInFunc"  >
+    <div class="buildInFunc">
 
-        <el-form :inline="true"  class="demo-form-inline search-style" size="small">
-            <el-form-item label="函数文件"  labelWidth="80px">
+        <el-form :inline="true" class="demo-form-inline search-style" size="small">
+            <el-form-item label="函数文件" labelWidth="80px">
                 <el-autocomplete
                         style="margin-right: 2px"
                         class="inline-input"
@@ -10,43 +10,47 @@
                         :fetch-suggestions="querySearch"
                         placeholder="输入或选择文件"
                         size="small">
-                </el-autocomplete >
+                </el-autocomplete>
                 <el-button-group>
                     <el-button type="success" @click.native="findFunc()" size="small">读取</el-button>
-                    <el-button type="primary" @click.native="createFunc()" size="small">创建</el-button>
+                    <el-button type="primary" @click.native="createFunc()" size="small"
+                               v-if="role == '2' || auth.api_func_add">创建
+                    </el-button>
                     <!--<el-button type="danger" @click.native="sureView(removeFunc)" size="small">删除</el-button>-->
                 </el-button-group>
             </el-form-item>
 
-            <el-form-item label="函数名" labelWidth="80px" >
+            <el-form-item label="函数名" labelWidth="80px">
                 <el-input v-model="funcName" placeholder="输入格式：${func(abc,123)}" size="small">
                 </el-input>
                 <!--</el-form-item>-->
             </el-form-item>
             <el-form-item>
-                <el-button type="primary" @click.native="checkFunc()" size="small">调试</el-button>
+                <el-button type="primary" @click.native="checkFunc()" size="small"
+                           v-if="role == '2' || auth.api_func_run">调试
+                </el-button>
             </el-form-item>
             <el-form-item>
-            <el-button-group>
-                <!--<el-tooltip content="检查语法" placement="top-start">-->
-                <!--<el-button type="primary" icon="el-icon-view" @click.native="checkFunc()" size="small"></el-button>-->
-                <!--</el-tooltip>-->
-                <el-tooltip content="重置文档" placement="top-start">
-                    <el-button type="info"
-                               icon="el-icon-refresh"
-                               @click.native="findFunc()"
-                               size="small">
+                <el-button-group>
+                    <!--<el-tooltip content="检查语法" placement="top-start">-->
+                    <!--<el-button type="primary" icon="el-icon-view" @click.native="checkFunc()" size="small"></el-button>-->
+                    <!--</el-tooltip>-->
+                    <el-tooltip content="重置文档" placement="top-start">
+                        <el-button type="info"
+                                   icon="el-icon-refresh"
+                                   @click.native="findFunc()"
+                                   size="small">
 
-                    </el-button>
-                </el-tooltip>
-                <el-tooltip content="保存文档" placement="top-start">
-                    <el-button type="success" icon="el-icon-document"
-                               @click.native="saveFunc()"
-                               size="small">
+                        </el-button>
+                    </el-tooltip>
+                    <el-tooltip content="保存文档" placement="top-start" v-if="role == '2' || auth.api_func_save">
+                        <el-button type="success" icon="el-icon-document"
+                                   @click.native="saveFunc()"
+                                   size="small">
 
-                    </el-button>
-                </el-tooltip>
-            </el-button-group>
+                        </el-button>
+                    </el-tooltip>
+                </el-button-group>
             </el-form-item>
         </el-form>
         <el-row>
@@ -98,6 +102,8 @@
                 comparator: '',
                 comparators: [],
                 result: '',
+                role: '',
+                auth: '',
             }
         },
         methods: {
@@ -114,7 +120,7 @@
             },
             createFunc() {
                 this.$axios.post(this.$api.createFuncApi, {'funcName': this.comparator}).then((response) => {
-                        if(this.messageShow(this, response)){
+                        if (this.messageShow(this, response)) {
                             this.getFuncAddress()
                         }
                     }
@@ -129,6 +135,9 @@
                 )
             },
             getFuncAddress() {
+                this.role = this.$store.state.roles;
+                this.auth = JSON.parse(this.$store.state.auth);
+
                 this.$axios.post(this.$api.getFuncAddressApi).then((response) => {
                         this.comparators = response['data']['data'];
                     }

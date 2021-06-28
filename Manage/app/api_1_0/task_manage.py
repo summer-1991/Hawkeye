@@ -1,7 +1,7 @@
 import json
 from flask import jsonify, request
 from . import api
-from app.models import Task, CaseSet, Case, db, User
+from app.models import Task, CaseSet, Case, db, User, CommonConfig
 from ..util.custom_decorator import login_required
 from app import scheduler
 from ..util.http_run import RunCase
@@ -20,9 +20,10 @@ def aps_test(project_id, case_ids, send_address=None, send_password=None, task_t
     url_index = new_add_args['url_index']
     task_name = new_add_args['task_name']
     flag = new_add_args['flag']
+    client_id = new_add_args['client']
 
     d = RunCase(project_id)
-    d.get_case_test(case_ids, environment, url_index)
+    d.get_case_test(case_ids, environment, url_index, client_id)
     jump_res = d.run_case()
     res = json.loads(jump_res)
 
@@ -65,7 +66,7 @@ def run_task():
     _data = Task.query.filter_by(id=ids).first()
     cases_id = get_case_id(_data.project_id, json.loads(_data.set_id), json.loads(_data.case_id))
     new_add_args = {'environment': _data.environment, 'url_index': _data.url_index, 'task_name': _data.task_name,
-                    'flag': 's'}
+                    'flag': 's', 'client': _data.client}
     new_report_id = aps_test(_data.project_id, cases_id,
                              performer=User.query.filter_by(id=current_user.id).first().name,
                              new_add_args=new_add_args)
@@ -83,7 +84,7 @@ def start_task():
     config_time = change_cron(_data.task_config_time)
     cases_id = get_case_id(_data.project_id, json.loads(_data.set_id), json.loads(_data.case_id))
     new_add_args = {'environment': _data.environment, 'url_index': _data.url_index, 'task_name': _data.task_name,
-                    'flag': 'c'}
+                    'flag': 'c', 'client': _data.client}
     scheduler.add_job(func=aps_test, trigger='cron', misfire_grace_time=60, coalesce=False,
                       args=[_data.project_id, cases_id, _data.task_send_email_address, _data.email_password,
                             _data.task_to_email_address, User.query.filter_by(id=current_user.id).first().name,
@@ -115,6 +116,7 @@ def add_task():
     url_index = data.get('url_index')
     status_url = data.get('status_url')
     environment = data.get('environment')
+    client_id = data.get('clientId')
 
     # 0 0 1 * * *
     if not (not to_email and not send_email and not password) and not (to_email and send_email and password):
@@ -141,6 +143,7 @@ def add_task():
             old_task_data.url_index = url_index
             old_task_data.status_url = status_url
             old_task_data.environment = environment
+            old_task_data.client = client_id
 
             if old_task_data.status != '创建' and old_task_data.task_config_time != time_config:
                 scheduler.reschedule_job(str(task_id), trigger='cron', **change_cron(time_config))  # 修改任务
@@ -166,7 +169,7 @@ def add_task():
                             num=num,
                             url_index=url_index,
                             status_url=status_url,
-                            environment=environment)
+                            environment=environment, client=client_id)
             db.session.add(new_task)
             db.session.commit()
             return jsonify({'msg': '新建成功', 'status': 1})
@@ -180,7 +183,7 @@ def edit_task():
     task_id = data.get('id')
     c = Task.query.filter_by(id=task_id).first()
     _data = {'num': c.num, 'task_name': c.task_name, 'task_config_time': c.task_config_time, 'task_type': c.task_type,
-             'set_ids': json.loads(c.set_id), 'case_ids': json.loads(c.case_id),
+             'set_ids': json.loads(c.set_id), 'case_ids': json.loads(c.case_id), 'client': c.client,
              'task_to_email_address': c.task_to_email_address, 'task_send_email_address': c.task_send_email_address,
              'password': c.email_password, 'environment': c.environment, 'url_index': c.url_index}
 
@@ -207,7 +210,11 @@ def find_task():
     total = pagination.total
     end_data = [{'task_name': c.task_name, 'task_config_time': c.task_config_time,
                  'id': c.id, 'task_type': c.task_type, 'status': c.status} for c in items]
-    return jsonify({'data': end_data, 'total': total, 'status': 1})
+
+    _client_config = CommonConfig.query.filter_by(c_type='client')
+    client_config = [c.c_key for c in _client_config]
+
+    return jsonify({'data': end_data, 'clients': client_config, 'total': total, 'status': 1})
 
 
 @api.route('/task/del', methods=['POST'])

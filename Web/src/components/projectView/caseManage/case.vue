@@ -19,8 +19,11 @@
             <el-form-item>
                 <el-button type="primary" icon="el-icon-search" @click.native="handleCaseCurrentChange(1)">搜索
                 </el-button>
-                <el-button type="primary" @click.native="addCase()">添加接口用例</el-button>
-                <el-button type="primary" @click.native="runScene(caseList,true,true)">批量运行</el-button>
+                <el-button type="primary" @click.native="addCase()" v-if="role == '2' || auth.api_scene_add">添加接口用例
+                </el-button>
+                <el-button type="primary" @click.native="runScene(caseList,true,true)"
+                           v-if="role == '2' || auth.api_scene_batch">批量运行
+                </el-button>
             </el-form-item>
 
         </el-form>
@@ -32,7 +35,8 @@
                         <el-row>
                             <el-col style="border:1px solid;border-color: #ffffff #ffffff rgb(234, 234, 234) #ffffff;padding:2px">
 
-                                <el-dropdown @command="dropdownSetEvent" style="float:right;">
+                                <el-dropdown @command="dropdownSetEvent" style="float:right;"
+                                             v-if="role == '2' || auth.api_scene_todo">
                                       <span class="el-dropdown-link" style="color: #4ae2d5">
                                         操作<i class="el-icon-arrow-down el-icon--right"></i>
                                       </span>
@@ -101,18 +105,22 @@
                                     label="操作">
                                 <template slot-scope="scope">
                                     <el-button type="primary" icon="el-icon-edit" size="mini"
-                                               @click.native="editCase(caseAll[scope.$index]['sceneId'])">
+                                               @click.native="editCase(caseAll[scope.$index]['sceneId'])"
+                                               v-if="role == '2' || auth.api_scene_edit">
                                         编辑
                                     </el-button>
                                     <el-button type="primary" icon="el-icon-tickets" size="mini"
-                                               @click.native="copyCase(caseAll[scope.$index]['sceneId'])">
+                                               @click.native="copyCase(caseAll[scope.$index]['sceneId'])"
+                                               v-if="role == '2' || auth.api_scene_edit">
                                         复制
                                     </el-button>
                                     <el-button type="primary" icon="el-icon-setting" size="mini"
-                                               @click.native="runScene(caseAll[scope.$index]['sceneId'])">运行
+                                               @click.native="runScene(caseAll[scope.$index]['sceneId'])"
+                                               v-if="role == '2' || auth.api_scene_run">运行
                                     </el-button>
                                     <el-button type="danger" icon="el-icon-delete" size="mini"
-                                               @click.native="sureView(delCase,caseAll[scope.$index]['sceneId'],caseAll[scope.$index]['name'])">
+                                               @click.native="sureView(delCase,caseAll[scope.$index]['sceneId'],caseAll[scope.$index]['name'])"
+                                               v-if="role == '2' || auth.api_scene_del">
                                         删除
                                     </el-button>
                                 </template>
@@ -140,7 +148,7 @@
                 <div style="margin-top: 5px"></div>
                 <caseEdit
                         :allSetList="allSetList"
-                        :currentSetId = "setTempData.setId"
+                        :currentSetId="setTempData.setId"
                         :proModelData="proModelData"
                         :projectId="form.projectId"
                         :setTempData="setTempData"
@@ -148,6 +156,7 @@
                         :funcAddress="funcAddress"
                         :proAndIdData="proAndIdData"
                         :baseUrlData="baseUrlData"
+                        :clientDataList="clientDataList"
                         ref="caseEditFunc">
 
                 </caseEdit>
@@ -182,7 +191,7 @@
             result: result,
 
         },
-        name: 'modeManage',
+        name: 'sceneManage',
         data() {
             return {
                 defaultProps: {
@@ -197,7 +206,8 @@
                 caseList: [],  //  临时存储被勾选的用例数据
                 proModelData: '',
                 proAndIdData: '',
-                baseUrlData:Array(),
+                baseUrlData: Array(),
+                clientDataList: Array(),
                 loading: false,
                 configData: '',
                 caseAll: [],  //  页面table的表格数据
@@ -219,6 +229,8 @@
                     projectId: null,
                     caseName: '',
                 },
+                role: '',
+                auth: '',
             }
         },
 
@@ -256,17 +268,21 @@
                         if (this.messageShow(this, response)) {
                             this.caseAll = response.data['data'];
                             this.casePage.total = response.data['total'];
+                            this.clientDataList = response.data['clients'];
                         }
                     }
                 )
             },
             initData() {
+                this.role = this.$store.state.roles;
+                this.auth = JSON.parse(this.$store.state.auth);
+
                 //  初始化页面数据
                 this.$axios.get(this.$api.baseDataApi).then((response) => {
                         this.proModelData = response.data['data'];
                         this.proAndIdData = response.data['pro_and_id'];
                         this.configData = response.data['config_name_list'];
-                        this.baseUrlData=response.data['baseUrlData']
+                        this.baseUrlData = response.data['baseUrlData']
                         if (response.data['user_pros']) {
                             this.form.projectId = this.proAndIdData[0].id;
                             this.findSet()
@@ -281,7 +297,7 @@
             },
             initProjectChoice() {
                 //  当项目选择项改变时，初始化模块和配置的数据
-                this.setTempData={name: null, setId: null,};
+                this.setTempData = {name: null, setId: null,};
                 this.setPage.currentPage = 1;
                 this.casePage.currentPage = 1;
                 this.findSet()
@@ -302,7 +318,7 @@
                                 this.$refs.testTree.setCurrentKey(this.setTempData.setId);  //"vuetree"是你自己在树形控件上设置的 ref="vuetree" 的名称
                                 this.findCase();
                             });
-                        }else {
+                        } else {
                             this.caseAll = []
                         }
                     }
