@@ -12,10 +12,23 @@
                     添加客户端配置
                 </el-button>
             </el-form-item>
+            <el-popconfirm title="是否确认删除选中的数据？" @onConfirm="batchDelClient()">
+                <el-button type="danger" slot="reference" icon="el-icon-delete" size="small"
+                           v-show="role === '2' || auth.api_report_del">批量删除
+                </el-button>
+            </el-popconfirm>
         </el-form>
         <el-tabs value="first" style="padding-left: 10px">
             <el-tab-pane label="客户端列表" name="first" class="table_padding">
-                <el-table :data="clientTableData" stripe max-height="725">
+                <el-table
+                        ref="multipleTable"
+                        :data="clientTableData"
+                        stripe max-height="725"
+                        @selection-change="handleSelectionChange">
+                     <el-table-column
+                            type="selection"
+                            width="55">
+                     </el-table-column>
                     <el-table-column
                             prop="c_key"
                             label="客户端id"
@@ -45,6 +58,9 @@
                         </template>
                     </el-table-column>
                 </el-table>
+                <div>
+                    <el-button size="mini" @click="toggleSelection()">取消选择</el-button>
+                </div>
 
                 <div class="pagination">
                     <el-pagination
@@ -94,6 +110,7 @@
             return {
                 loading: false,  //  页面加载状态开关
                 clientTableData: Array(),
+                tableCheckedIds: [],
                 total: 1,
                 currentPage: 1,
                 sizePage: 20,
@@ -128,8 +145,7 @@
                                 message: response.data['msg'],
                                 type: 'warning',
                             });
-                        }
-                        else {
+                        } else {
                             this.$message({
                                 showClose: true,
                                 message: response.data['msg'],
@@ -196,7 +212,39 @@
                     }
                 )
             },
-        },
+            toggleSelection() {
+                this.$refs.multipleTable.clearSelection();
+            },
+            handleSelectionChange(val) {
+//                console.log(val)
+                let ids = []
+                if (val && val.length > 0) {
+                    for (var i = 0; i < val.length; i++) {
+//                        console.log(val[i].id)
+                        ids.push(val[i].id)
+                    }
+                    this.tableCheckedIds = ids
+                } else {
+                    this.tableCheckedIds = []
+                }
+            },
+            batchDelClient(){
+                if(this.tableCheckedIds.length==0){
+                    return false
+                }
+                this.$axios.delete(
+                    this.$api.batchDelClientApi,{"data":this.tableCheckedIds}
+                ).then((response) => {
+                        this.messageShow(this, response);
+                        // 分页数量判断，当删除了某一页的最后一条数据后，分页数量-1
+                        if ((this.currentPage - 1) * this.sizePage + 1 === this.total) {
+                            this.currentPage = this.currentPage - 1
+                        }
+                        this.handleCurrentChange();
+                    }
+                )
+            },
+     },
         mounted() {
             this.findClient();
         }

@@ -170,7 +170,7 @@ def find_user():
     pagination = _data.order_by(User.id.asc()).paginate(page, per_page=per_page, error_out=False)
     items = pagination.items
     total = pagination.total
-    end_data = [{'userName': c.name, 'user_id': c.id, 'status': c.status} for c in items]
+    end_data = [{'userName': c.name, 'user_id': c.id, 'status': c.status, 'userRole': c.role.name} for c in items]
 
     role_data = [{'role_id': r.id, 'role_name': r.name} for r in Role.query.all()]
 

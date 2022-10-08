@@ -169,6 +169,31 @@ def del_wiki():
     db.session.delete(_data)
     return jsonify({'msg': '删除成功', 'status': 1})
 
+@api.route('/wiki/moveUp', methods=['POST'])
+@login_required
+def moveUp_wiki():
+    """向上移动"""
+    data = request.json
+    cur_wiki_id = data.get('curWikiId')
+    pre_wiki_id = data.get('preWikiId')
+    cur_data = Wiki.query.filter_by(id=cur_wiki_id).first()
+    pre_data = Wiki.query.filter_by(id=pre_wiki_id).first()
+    cur_data.num, pre_data.num = pre_data.num, cur_data.num
+    db.session.commit()
+    return jsonify({'msg': '上移成功', 'status': 1})
+
+@api.route('/wiki/moveDown',methods=['POST'])
+@login_required
+def moveDown_wiki():
+    """向下移动"""
+    data = request.json
+    cur_wiki_id = data.get('curWikiId')
+    after_wiki_id = data.get('afterWikiId')
+    cur_data = Wiki.query.filter_by(id=cur_wiki_id).first()
+    after_data = Wiki.query.filter_by(id=after_wiki_id).first()
+    cur_data.num,after_data.num = after_data.num,cur_data.num
+    db.session.commit()
+    return jsonify({'msg': '下移成功', 'status': 1})
 
 @api.route('/wiki/annex', methods=['POST'])
 @login_required

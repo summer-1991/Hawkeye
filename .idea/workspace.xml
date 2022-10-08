@@ -9,12 +9,12 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Manage/app/util/http_run.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="526">
-              <caret line="310" column="34" selection-start-line="310" selection-start-column="26" selection-end-line="310" selection-end-column="34" />
+            <state relative-caret-position="6877">
+              <caret line="320" selection-start-line="320" selection-end-line="320" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -26,7 +26,7 @@
         <entry file="file://$PROJECT_DIR$/Manage/app/util/httprunner/runner.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="227">
-              <caret line="170" column="26" selection-start-line="170" selection-start-column="21" selection-end-line="170" selection-end-column="26" />
+              <caret line="172" column="26" selection-start-line="172" selection-start-column="26" selection-end-line="172" selection-end-column="26" />
             </state>
           </provider>
         </entry>
@@ -210,9 +210,8 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="1912" y="-8" width="1936" height="1056" extended-state="6" />
-    <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.25799572" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.26066098" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -267,8 +266,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Manage/app/util/http_run.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="526">
-          <caret line="310" column="34" selection-start-line="310" selection-start-column="26" selection-end-line="310" selection-end-column="34" />
+        <state relative-caret-position="6877">
+          <caret line="320" selection-start-line="320" selection-end-line="320" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>
@@ -278,7 +277,7 @@
     <entry file="file://$PROJECT_DIR$/Manage/app/util/httprunner/runner.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="227">
-          <caret line="170" column="26" selection-start-line="170" selection-start-column="21" selection-end-line="170" selection-end-column="26" />
+          <caret line="172" column="26" selection-start-line="172" selection-start-column="26" selection-end-line="172" selection-end-column="26" />
         </state>
       </provider>
     </entry>

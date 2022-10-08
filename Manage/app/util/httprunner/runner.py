@@ -221,9 +221,9 @@ class Runner(object):
         self.session_context.update_test_variables("request", parsed_test_request)
 
         request_params = parsed_test_request.get('params')
-        if 'need_sig' in request_params:
+        need_sig = test_dict.get("need_sig", -1)
+        if need_sig != -1:
             self.param_md5(request_params)
-            del request_params['need_sig']
 
         try:
             url = parsed_test_request.pop('url')
@@ -401,7 +401,7 @@ class Runner(object):
 
     def param_md5(self, param):
         if not param.get('clientid'):
-            client_id = 1012
+            client_id = ""
             param['clientid'] = client_id
         else:
             client_id = param['clientid']

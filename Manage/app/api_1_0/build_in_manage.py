@@ -111,3 +111,17 @@ def remove_func():
     else:
         os.remove('{}/{}'.format(FUNC_ADDRESS, func_name))
     return jsonify({'msg': '删除成功', 'status': 1})
+
+
+@api.route('/func/uploadFile', methods=['POST'])
+@login_required
+def upload_file_func():
+    """ 上传依赖文件 """
+    data = request.files
+    file = data['file']
+    address = '{}/{}'.format(FUNC_ADDRESS, 'data')
+    if not os.path.exists(address):
+        os.makedirs(address)
+
+    file.save(os.path.join(address, file.filename))
+    return jsonify({"msg": "上传成功", "status": 1})

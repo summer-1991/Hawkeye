@@ -18,12 +18,14 @@ def aps_test(project_id, case_ids, send_address=None, send_password=None, task_t
     # db.create_scoped_session()
     environment = new_add_args['environment']
     url_index = new_add_args['url_index']
+    gm_url = new_add_args['gm']
     task_name = new_add_args['task_name']
     flag = new_add_args['flag']
     client_id = new_add_args['client']
+    task_variable = new_add_args['json_variable']
 
     d = RunCase(project_id)
-    d.get_case_test(case_ids, environment, url_index, client_id)
+    d.get_case_test(case_ids, environment, url_index, client_id, gm_url, task_variable)
     jump_res = d.run_case()
     res = json.loads(jump_res)
 
@@ -65,8 +67,9 @@ def run_task():
     ids = data.get('id')
     _data = Task.query.filter_by(id=ids).first()
     cases_id = get_case_id(_data.project_id, json.loads(_data.set_id), json.loads(_data.case_id))
-    new_add_args = {'environment': _data.environment, 'url_index': _data.url_index, 'task_name': _data.task_name,
-                    'flag': 's', 'client': _data.client}
+    new_add_args = {'environment': _data.environment, 'url_index': _data.url_index, 'gm': _data.gm,
+                    'task_name': _data.task_name, 'flag': 's', 'client': _data.client,
+                    'json_variable': _data.json_variable}
     new_report_id = aps_test(_data.project_id, cases_id,
                              performer=User.query.filter_by(id=current_user.id).first().name,
                              new_add_args=new_add_args)
@@ -83,8 +86,9 @@ def start_task():
     _data = Task.query.filter_by(id=ids).first()
     config_time = change_cron(_data.task_config_time)
     cases_id = get_case_id(_data.project_id, json.loads(_data.set_id), json.loads(_data.case_id))
-    new_add_args = {'environment': _data.environment, 'url_index': _data.url_index, 'task_name': _data.task_name,
-                    'flag': 'c', 'client': _data.client}
+    new_add_args = {'environment': _data.environment, 'url_index': _data.url_index, 'gm': _data.gm,
+                    'task_name': _data.task_name, 'flag': 'c', 'client': _data.client,
+                    'json_variable': _data.json_variable}
     scheduler.add_job(func=aps_test, trigger='cron', misfire_grace_time=60, coalesce=False,
                       args=[_data.project_id, cases_id, _data.task_send_email_address, _data.email_password,
                             _data.task_to_email_address, User.query.filter_by(id=current_user.id).first().name,
@@ -116,7 +120,12 @@ def add_task():
     url_index = data.get('url_index')
     status_url = data.get('status_url')
     environment = data.get('environment')
+    gm = data.get('gm')
+    json_variable = data.get('json_variable')
     client_id = data.get('clientId')
+
+    if gm is not None and len(gm) > 0 and 'http' not in gm:
+        return jsonify({'msg': '待替换的gm_url必须是正确的url格式！', 'status': 0})
 
     # 0 0 1 * * *
     if not (not to_email and not send_email and not password) and not (to_email and send_email and password):
@@ -143,6 +152,8 @@ def add_task():
             old_task_data.url_index = url_index
             old_task_data.status_url = status_url
             old_task_data.environment = environment
+            old_task_data.gm = gm
+            old_task_data.json_variable = json_variable
             old_task_data.client = client_id
 
             if old_task_data.status != '创建' and old_task_data.task_config_time != time_config:
@@ -169,7 +180,7 @@ def add_task():
                             num=num,
                             url_index=url_index,
                             status_url=status_url,
-                            environment=environment, client=client_id)
+                            environment=environment, gm=gm, json_variable=json_variable, client=client_id)
             db.session.add(new_task)
             db.session.commit()
             return jsonify({'msg': '新建成功', 'status': 1})
@@ -185,7 +196,8 @@ def edit_task():
     _data = {'num': c.num, 'task_name': c.task_name, 'task_config_time': c.task_config_time, 'task_type': c.task_type,
              'set_ids': json.loads(c.set_id), 'case_ids': json.loads(c.case_id), 'client': c.client,
              'task_to_email_address': c.task_to_email_address, 'task_send_email_address': c.task_send_email_address,
-             'password': c.email_password, 'environment': c.environment, 'url_index': c.url_index}
+             'password': c.email_password, 'environment': c.environment, 'url_index': c.url_index, 'gm': c.gm,
+             'json_variable': c.json_variable}
 
     return jsonify({'data': _data, 'status': 1})
 

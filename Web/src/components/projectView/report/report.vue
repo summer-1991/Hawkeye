@@ -39,43 +39,33 @@
                 <!--<el-button type="primary" size="small" @click.native="runScene()" :loading="this.loading">跑业务-->
                 <!--</el-button>-->
             </el-form-item>
+            <el-popconfirm title="是否确认删除选中的数据？" @onConfirm="batchDelReport()">
+                <el-button type="danger" slot="reference"
+                           icon="el-icon-delete" size="small"
+                           v-show="role === '2' || auth.api_report_del">批量删除
+                </el-button>
+            </el-popconfirm>
         </el-form>
 
         <el-tabs value="first" class="table_padding">
             <el-tab-pane label="报告列表" name="first" style="margin: 0 0 -10px;">
 
                 <!--<el-scrollbar wrap-class="scrollbarList">-->
-                <el-table :data="tableData"
-                          max-height="725"
-                          stripe>
 
-                    <el-table-column
-                            prop="project_name"
-                            label="所属项目"
-                            minWidth="50">
-                    </el-table-column>
 
-                    <el-table-column
-                            :show-overflow-tooltip=true
-                            minWidth="200"
-                            prop="name"
-                            label="用例"
-                    >
-                    </el-table-column>
-                    <el-table-column
-                            prop="create_time"
-                            label="时间"
-                            minWidth="100">
-                    </el-table-column>
-                    <el-table-column
-                            prop="performer"
-                            label="执行者"
-                            minWidth="100">
-                    </el-table-column>
-                    <el-table-column
-                            prop="read_status"
-                            label="状态"
-                            width="80">
+                <el-table
+                        ref="reportMultipleTable"
+                        @selection-change="handleSelectionChange"
+                        :data="tableData"
+                        max-height="725"
+                        stripe>
+                    <el-table-column type="selection" width="45"></el-table-column>
+                    <el-table-column prop="project_name" label="所属项目" minWidth="50"></el-table-column>
+                    <el-table-column :show-overflow-tooltip=true minWidth="200" prop="name"
+                                     label="用例"></el-table-column>
+                    <el-table-column prop="create_time" label="时间" minWidth="100"></el-table-column>
+                    <el-table-column prop="performer" label="执行者" minWidth="100"></el-table-column>
+                    <el-table-column prop="read_status" label="状态" width="80">
                         <template slot-scope="scope">
                             <!--<div :style="scope.row.read_status === '已读' ? 'color:#2bef2b': 'color:rgb(255, 74, 74)'">-->
                             <!--{{scope.row.read_status}}-->
@@ -85,10 +75,7 @@
                             </el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column
-                            label="操作"
-                            width="300"
-                    >
+                    <el-table-column label="操作" width="300">
                         <template slot-scope="scope">
                             <el-button type="primary" icon="el-icon-zoom-in" size="mini"
                                        @click.native="check(tableData[scope.$index]['id'])">查看
@@ -103,6 +90,9 @@
                         </template>
                     </el-table-column>
                 </el-table>
+                <el-button @click="cancelSelection()" size="mini" style="position: absolute;margin-top: 2px;">取消选择
+                </el-button>
+
                 <!--</el-scrollbar>-->
                 <div class="pagination">
                     <el-pagination
@@ -121,6 +111,7 @@
     </div>
 </template>
 
+
 <script>
     export default {
         name: 'reportManage',
@@ -128,6 +119,9 @@
             return {
                 proAndIdData: '',
                 tableData: [],
+
+                tableCheckedIds: [],//被选中的记录数据-----对应“批量删除”传的参数值
+
                 total: 1,
                 currentPage: 1,
                 sizePage: 20,
@@ -154,6 +148,54 @@
                 this.currentPage = val;
                 this.findReport()
             },
+            cancelSelection() {
+                //  清除接口选择
+                this.$refs.reportMultipleTable.clearSelection();
+            },
+            handleSelectionChange(val) {
+                if (val && val.length > 0) {
+                    let ids = []
+                    for (var i = 0; i < val.length; i++) {
+                        ids.push(val[i].id)
+                    }
+                    this.tableCheckedIds = ids
+                } else {
+                    this.tableCheckedIds = []
+                }
+            },
+
+            batchDelReport() {
+                if (this.tableCheckedIds.length == 0) {
+                    return false;
+                }
+
+                this.$axios.delete(this.$api.batchDelReportApi,
+                    {"data": this.tableCheckedIds}
+                )
+                    .then((response) => {
+                            //                       if (this.messageShow(this, response)) {
+                            //                           this.findReport()
+                            //                       }
+                            this.messageShow(this, response);
+                            if ((this.currentPage - 1) * this.sizePage + 1 === this.total) {
+                                this.currentPage = this.currentPage - 1
+                            }
+                            this.handleCurrentChange(1);
+                        }
+                    )
+            },
+
+            delReport(report_id) {
+                this.$axios.post(this.$api.delReportApi, {'report_id': report_id}).then((response) => {
+                        this.messageShow(this, response);
+                        if ((this.currentPage - 1) * this.sizePage + 1 === this.total) {
+                            this.currentPage = this.currentPage - 1
+                        }
+                        this.findReport();
+                    }
+                )
+            },
+
             // handleCurrentChange1(proId) {
             //     // let index = this.tableData.map(1)
             //     for (let i = 0; i < this.proAndIdData.length; i++) {
@@ -197,16 +239,7 @@
                     }
                 )
             },
-            delReport(report_id) {
-                this.$axios.post(this.$api.delReportApi, {'report_id': report_id}).then((response) => {
-                        this.messageShow(this, response);
-                        if ((this.currentPage - 1) * this.sizePage + 1 === this.total) {
-                            this.currentPage = this.currentPage - 1
-                        }
-                        this.findReport();
-                    }
-                )
-            },
+
             check(reportId) {
 
                 // this.$router.push({path: 'reportShow', query: {reportId: reportId}});

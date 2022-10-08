@@ -25,6 +25,10 @@ def add_case():
     client_id = data.get('clientId')
     environment = data.get('environment')
     status_url = data.get('status_url')
+    gm = data.get('gm')
+
+    if gm is not None and len(gm) > 0 and 'http' not in gm:
+        return jsonify({'msg': '待替换的gm_url必须是正确的url格式！', 'status': 0})
 
     merge_variable = json.dumps(json.loads(variable) + json.loads(project_data.variables))
     _temp_check = extract_variables(convert(json.loads(merge_variable)))
@@ -60,6 +64,7 @@ def add_case():
             old_data.client = client_id
             old_data.environment = environment
             old_data.status_url = status_url
+            old_data.gm = gm
             old_data.case_set_id = case_set_id
             old_data.func_address = func_address
             old_data.variable = variable
@@ -116,7 +121,7 @@ def add_case():
 
             new_case = Case(num=num, name=name, desc=desc, project_id=project_id, variable=variable, client=client_id,
                             func_address=func_address, case_set_id=case_set_id, times=times, environment=environment,
-                            status_url=status_url)
+                            status_url=status_url, gm=gm)
             db.session.add(new_case)
             db.session.commit()
             case_id = new_case.id
@@ -244,7 +249,8 @@ def edit_case():
                           })
     _data2 = {'num': _data.num, 'name': _data.name, 'desc': _data.desc, 'cases': case_data, 'setId': _data.case_set_id,
               'func_address': json.loads(_data.func_address), 'times': _data.times, 'client': _data.client,
-              'environment': _data.environment, 'project_id': _data.project_id, 'status_url': _data.status_url}
+              'environment': _data.environment, 'project_id': _data.project_id, 'status_url': _data.status_url,
+              'gm': _data.gm}
     if _data.variable:
         _data2['variable'] = json.loads(_data.variable)
     else:

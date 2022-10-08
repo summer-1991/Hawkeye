@@ -70,10 +70,10 @@
                                    style="width: 150px;padding-right:5px"
                                    @change="changeEnvChoice">
                             <el-option
-                                    v-for="item in environmentList"
-                                    :key="item"
-
-                                    :value="item">
+                                    v-for="(item,key) in environmentList"
+                                    :key="key"
+                                    :label="item"
+                                    :value="key">
                             </el-option>
                         </el-select>
 
@@ -90,9 +90,10 @@
                             </el-option>
                         </el-select>
 
+
                         <el-select v-model="caseData.clientId"
                                    filterable size="small"
-                                   style="width: 150px;padding-right:5px">
+                                   style="width: 150px;padding-right:5px" clearable>
                             <el-option
                                     v-for="(item) in clientDataList"
                                     :key="item"
@@ -101,6 +102,9 @@
                             >
                             </el-option>
                         </el-select>
+
+                        <el-input v-model="caseData.gm" clearable style="width: 200px;padding-right:5px"
+                                  placeholder="输入需替换的gm_url"></el-input>
 
                         <el-select v-model="caseData.funcAddress" multiple placeholder="请选择导入函数文件" size="small">
                             <el-option
@@ -463,6 +467,7 @@
                     projectId: '',
                     setId: '',
                     variable: [],
+                    gm: '',
                     desc: '',
                     times: '',
                     name: '',
@@ -473,14 +478,18 @@
                     apiCases: [],// 执行步骤里面的所有接口信息
                 },
                 configShow: false,
-                environmentList: ['测试环境', '预发环境', '灰度/正式环境'],
+                environmentList: {
+                    testPre: "测试预发",
+                    test: "测试",
+                    pre: "预发",
+                    pro: "灰度/正式"
+                },
                 currentUrlData: Array(),
             }
         },
         methods: {
             handleCheckAllChange(val) {
                 if (val) {
-
                     for (let i = 0; i < this.ApiMsgData.length; i++) {
                         if (this.ApiMsgData[i].check) {
                             //
@@ -489,12 +498,9 @@
                             this.apiMsgVessel.push(this.ApiMsgData[i]);
                         }
                     }
-
                 } else {
                     for (let i = 0; i < this.ApiMsgData.length; i++) {
-
                         this.ApiMsgData[i].check = false;
-
                     }
                     this.apiMsgVessel = []
                 }
@@ -565,6 +571,7 @@
                 this.caseData.name = '';
                 this.caseData.times = '';
                 this.caseData.desc = '';
+                this.caseData.gm = '';
                 this.caseData.id = '';
                 this.caseData.clientId = '1012';
                 this.caseData.environment = '';
@@ -591,6 +598,7 @@
 
                         this.caseData.name = response.data['data']['name'];
                         this.caseData.desc = response.data['data']['desc'];
+                        this.caseData.gm = response.data['data']['gm'];
                         this.caseData.times = response.data['data']['times'];
                         this.caseData.funcAddress = response.data['data']['func_address'];
                         this.caseData.apiCases = response.data['data']['cases'];
@@ -604,9 +612,9 @@
                         }
                         this.caseData.modelFormVisible = true;
                         this.caseData.clientId = response.data['data']['client'];
-                        this.caseData.environment = this.environmentList[response.data['data']['environment']];
+                        this.caseData.environment = response.data['data']['environment'];
                         this.currentUrlData = Array();
-                        if (response.data['data']['environment'] != -1) {
+                        if (this.caseData.environment.length != 0) {
                             this.currentUrlData = this.baseUrlData[this.projectId][response.data['data']['environment']];
                         }
                         this.form.choiceUrl = this.currentUrlData[response.data['data']['status_url']];
@@ -630,9 +638,9 @@
             changeEnvChoice() {
                 this.currentUrlData = Array();
                 this.form.choiceUrl = '';
-                let index = this.environmentList.indexOf(this.caseData.environment);
-                if (index != -1) {
-                    this.currentUrlData = this.baseUrlData[this.caseData.projectId][index];
+                this.caseData.gm = ''
+                if (this.caseData.environment.length != 0) {
+                    this.currentUrlData = this.baseUrlData[this.caseData.projectId][this.caseData.environment];
                 }
             },
             changeModuleChoice() {
@@ -819,9 +827,10 @@
                     'times': this.caseData.times,
                     'caseSetId': this.caseData.setId,
                     'desc': this.caseData.desc,
+                    'gm': this.caseData.gm,
                     'status_url': this.currentUrlData.indexOf(this.form.choiceUrl),
                     'clientId': this.caseData.clientId,
-                    'environment': this.environmentList.indexOf(this.caseData.environment),
+                    'environment': this.caseData.environment,
                     'funcAddress': this.caseData.funcAddress,
                     'variable': JSON.stringify(this.caseData.variable),
                     'projectId': this.caseData.projectId,

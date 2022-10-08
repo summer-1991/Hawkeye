@@ -83,6 +83,18 @@ def del_common_config():
     return jsonify({'msg': '删除成功', 'status': 1})
 
 
+@api.route('/commonConfig/batchDel',methods=['DELETE'])
+@login_required
+def batchDel_client():
+    data = request.json
+    if data and len(data)>0:
+        _data=CommonConfig.query.filter(CommonConfig.id.in_(set(data))).all()
+        for clientId in _data:
+            db.session.delete(clientId)
+        db.session.commit()
+    return jsonify({'msg': '删除成功', 'status': 1})
+
+
 @api.route('/commonConfig/edit', methods=['POST'])
 @login_required
 def edit_common_config():

@@ -78,7 +78,7 @@
                             </el-button>
                             <el-button type="primary" size="mini" v-if="tableData[scope.$index]['status'] !== '创建'"
                                        v-show="(role === '2' || auth.api_task_todo) && tableData[scope.$index]['status'] !== '启动'"
-                                       @click.native="resumeTask(tableData[scope.$index]['id'])">
+                                       @click.native="resumeTask(tableData[scope.$index]['id'])">启动
                             </el-button>
                             <el-button type="primary" size="mini" v-if="tableData[scope.$index]['status'] !== '创建'"
                                        @click.native="removeTask(tableData[scope.$index]['id'])"
@@ -161,9 +161,10 @@
                                        style="width: 150px;padding-right:5px"
                                        @change="changeEnvChoice">
                                 <el-option
-                                        v-for="item in environmentList"
-                                        :key="item"
-                                        :value="item">
+                                        v-for="(item,key) in environmentList"
+                                        :key="key"
+                                        :label="item"
+                                        :value="key">
                                 </el-option>
                             </el-select>
 
@@ -180,7 +181,7 @@
                             </el-select>
 
                             <el-select v-model="taskData.clientId"
-                                       filterable style="width: 150px;padding-right:5px">
+                                       filterable style="width: 150px;padding-right:5px" clearable>
                                 <el-option
                                         v-for="(item) in clientsList"
                                         :key="item"
@@ -189,6 +190,31 @@
                                 >
                                 </el-option>
                             </el-select>
+
+                            <el-input v-model="taskData.gm" clearable style="width: 200px;padding-right:5px"
+                                      placeholder="输入需替换的gm_url"></el-input>
+
+                        </el-form-item>
+                        <el-form-item label="全局变量" :label-width="taskData.formLabelWidth">
+                            <el-button type="primary" size="mini"
+                                       style="margin-left:20px"
+                                       @click="formatData()">格式化
+                            </el-button>
+                            <div style="border:1px solid rgb(234, 234, 234) ">
+                                <el-container>
+                                    <editor
+                                            v-model="taskData.jsonVariable"
+                                            style="font-size: 15px"
+                                            @init="editorInit"
+                                            lang="json"
+                                            theme="chrome"
+                                            width="100%"
+                                            height="100px"
+                                            :options="{}"
+                                    >
+                                    </editor>
+                                </el-container>
+                            </div>
                         </el-form-item>
                         <el-form-item label="任务名称" :label-width="taskData.formLabelWidth">
                             <el-input v-model="taskData.name" auto-complete="off">
@@ -232,6 +258,9 @@
 
 <script>
     export default {
+        components: {
+            editor: require('vue2-ace-editor'),
+        },
         name: 'modeManage',
         data() {
             return {
@@ -256,8 +285,6 @@
                     set_id: '',
                     projectId: '',
                     taskName: '',
-
-
                 },
                 taskData: {
                     id: '',
@@ -273,9 +300,16 @@
                     formLabelWidth: '90px',
                     environment: '',
                     choiceUrl: '',
-                    clientId: '1012'
+                    gm: '',
+                    clientId: '1012',
+                    jsonVariable: '',
                 },
-                environmentList: ['测试环境', '预发环境', '灰度/正式环境'],
+                environmentList: {
+                    testPre: "测试预发",
+                    test: "测试",
+                    pre: "预发",
+                    pro: "灰度/正式",
+                },
                 currentUrlData: Array(),
                 baseUrlData: Array(),
                 clientsList: Array(),
@@ -286,6 +320,25 @@
 
 
         methods: {
+            editorInit() {
+                require('brace/ext/language_tools');
+                require('brace/mode/json');
+                require('brace/theme/chrome');
+                require('brace/snippets/json')
+            },
+            formatData() {
+                // 格式化json字符串
+                try {
+                    this.taskData.jsonVariable = JSON.parse(this.taskData.jsonVariable);
+                    this.taskData.jsonVariable = JSON.stringify(this.taskData.jsonVariable, null, 4);
+                } catch (err) {
+                    this.$message({
+                        showClose: true,
+                        message: 'json格式错误',
+                        type: 'warning',
+                    });
+                }
+            },
             httpSend() {
                 this.role = this.$store.state.roles;
                 this.auth = JSON.parse(this.$store.state.auth);
@@ -312,9 +365,9 @@
             changeEnvChoice() {
                 this.currentUrlData = Array();
                 this.taskData.choiceUrl = '';
-                let index = this.environmentList.indexOf(this.taskData.environment);
-                if (index != -1) {
-                    this.currentUrlData = this.baseUrlData[this.form.projectId][index];
+                this.taskData.gm = '';
+                if (this.taskData.environment.length != 0) {
+                    this.currentUrlData = this.baseUrlData[this.form.projectId][this.taskData.environment];
                 }
             },
             changeSceneChoice() {
@@ -325,7 +378,6 @@
                     this.caseStatus = true;
                     this.form.case = [];
                     this.form.set_id = ''
-
                 }
             },
             handleCurrentChange(val) {
@@ -368,13 +420,14 @@
                 this.taskData.password = '';
                 this.taskData.environment = '';
                 this.taskData.choiceUrl = '';
+                this.taskData.gm = '';
                 this.taskData.clientId = '1012';
                 this.form.set = [];
                 this.form.case = [];
                 this.currentUrlData = [];
                 this.taskData.num = '';
                 this.taskData.modelFormVisible = true;
-
+                this.taskData.jsonVariable = '';
             },
             addTask() {
                 if (this.taskData.environment != '' && this.taskData.choiceUrl == '') {
@@ -384,6 +437,19 @@
                         type: 'warning',
                     });
                     return
+                }
+
+                if (this.taskData.jsonVariable) {
+                    try {
+                        JSON.parse(this.taskData.jsonVariable)
+                    } catch (err) {
+                        this.$message({
+                            showClose: true,
+                            message: 'json格式错误',
+                            type: 'warning',
+                        });
+                        return
+                    }
                 }
 
                 this.$axios.post(this.$api.addTaskApi, {
@@ -400,7 +466,9 @@
                     'password': this.taskData.password,
                     'url_index': this.currentUrlData.indexOf(this.taskData.choiceUrl),
                     'status_url': this.taskData.choiceUrl,
-                    'environment': this.environmentList.indexOf(this.taskData.environment),
+                    'environment': this.taskData.environment,
+                    'gm': this.taskData.gm,
+                    'json_variable': this.taskData.jsonVariable,
                     'clientId': this.taskData.clientId
                 }).then((response) => {
 
@@ -446,9 +514,11 @@
                         this.form.case = response.data['data']['case_ids'];
                         this.taskData.modelFormVisible = true;
 
-                        this.taskData.environment = this.environmentList[response.data['data']['environment']];
+                        this.taskData.environment = response.data['data']['environment'];
                         this.changeEnvChoice();
                         this.taskData.choiceUrl = this.currentUrlData[response.data['data']['url_index']];
+                        this.taskData.gm = response.data['data']['gm'];
+                        this.taskData.jsonVariable = response.data['data']['json_variable'];
                         this.taskData.clientId = response.data['data']['client']
                     }
                 )

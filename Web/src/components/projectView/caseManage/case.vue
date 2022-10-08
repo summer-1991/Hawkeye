@@ -13,7 +13,7 @@
 
             </el-form-item>
             <el-form-item label="用例名称">
-                <el-input placeholder="请输入用例" v-model="form.caseName">
+                <el-input placeholder="请输入用例" v-model="form.caseName" clearable>
                 </el-input>
             </el-form-item>
             <el-form-item>

@@ -18,6 +18,18 @@
                 <el-button type="primary" size="mini" @click.native="privatesTestCaseFile(false)" v-show="privates">所有
                 </el-button>
                 <el-button type="primary" size="mini" @click.native="collapse()">隐藏</el-button>
+                <el-upload
+                        :file-list="fileList"
+                        class="upload-demo"
+                        :on-success="onSuccess"
+                        action="/api/testCaseFile/uploadFile"
+                        :data="uploadData"
+                        :disabled="tempTestCaseFileData.id === null || tempTestCaseFileData.status === 0">
+                    <el-button size="mini" type="warning"
+                               :disabled="tempTestCaseFileData.id === null || tempTestCaseFileData.status === 0"
+                    >上传
+                    </el-button>
+                </el-upload>
                 <el-button type="danger" size="mini"
                            @click.native="delTestCaseFileBtn">
                     删除
@@ -87,8 +99,10 @@
             }),
             monitorFileDataStatus() {
                 return this.tempTestCaseFileData.status;
+            },
+            uploadData() {
+                return {"id": this.tempTestCaseFileData.id}
             }
-            ,
         },
         watch: {
             monitorFileDataStatus: {
@@ -135,7 +149,8 @@
                 defaultProps: {
                     children: 'children',
                     label: 'name'
-                }
+                },
+                fileList: [],
             }
         },
         methods: {
@@ -209,6 +224,14 @@
                         this.messageShow(this, response)
                     }
                 )
+            },
+            onSuccess(response) {
+                this.fileList = [];
+                this.$message({
+                    message: response.msg,
+                    type: 'success'
+                });
+                this.getTestCaseFile(this.tempTestCaseFileData.id)
             },
             delTestCaseFileBtn() {
                 if (!this.tempTestCaseFileData.id) {
@@ -376,5 +399,9 @@
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
+    }
+
+    .el-upload-list {
+        display: contents;
     }
 </style>

@@ -4,6 +4,7 @@ from app.models import *
 from flask_login import current_user
 from ..util.utils import *
 from ..util.global_variable import *
+from ..util.tool_func import *
 
 
 @api.route('/testCaseFile/add', methods=['POST'])
@@ -40,10 +41,13 @@ def add_test_case_file():
             with open('{}{}.txt'.format(TEST_FILE_ADDRESS, _new.id), 'w', encoding='utf-8') as f:
                 if file_type == 'x':
                     f.write(
-                        """{"root":{"data":{"id":"byqb16f7t8o0","created":1574819812654,"text":"中心主题","priority":null,"font-family":"黑体, SimHei","font-size":32,"progress":null},"children":[]},"template":"right","theme":"fresh-blue","version":"1.4.43"}""")
+                        """{"root":{"data":{"id":"byqb16f7t8o0","created":1574819812654,"text":"中心主题",
+                        "priority":null,"font-family":"黑体, SimHei","font-size":32,"progress":null},"children":[]},
+                        "template":"right","theme":"fresh-blue","version":"1.4.43"}""")
                 else:
                     f.write(
-                        """[{"name": "Sheet1", "color": "", "index": 1, "status": 1, "order": 1, "celldata": [], "config": {}}]""")
+                        """[{"name": "Sheet1", "color": "", "index": 1, "status": 1, "order": 1, "celldata": [], 
+                        "config": {}}]""")
         return jsonify({'msg': '新建成功', 'status': 1, 'id': _new.id, 'higher_id': _new.higher_id, })
 
 
@@ -106,8 +110,13 @@ def save_test_case_file():
     show = data.get('show')
     ids = data.get('ids')
 
+    old_data = TestCaseFile.query.filter_by(id=ids).first()
+    if old_data.operator_id != 0 and old_data.operator_id != current_user.id:
+        user_data = User.query.filter_by(id=old_data.operator_id).first()
+        return jsonify({'status': 0, 'msg': '{} 正在编辑，请稍后...'.format(user_data.name)})
+
     if _data is None or _data == '':
-        return jsonify({'status': 0, 'mag': '保存内容为空'})
+        return jsonify({'status': 0, 'msg': '保存内容为空'})
 
     with open('{}{}.txt'.format(TEST_FILE_ADDRESS, ids), 'w', encoding='utf-8') as f:
         f.write(_data)
@@ -139,3 +148,46 @@ def del_test_case_file():
 
     db.session.delete(_edit)
     return jsonify({'msg': '删除成功', 'status': 1})
+
+
+@api.route('/testCaseFile/update', methods=['POST'])
+@login_required
+def update_test_case_file_operator():
+    """ 更新此时文件操作者 """
+    data = request.json
+    old_id = data.get('oldId')
+    new_id = data.get('newId')
+
+    if old_id != 0:
+        _old_data = TestCaseFile.query.filter_by(id=old_id).first()
+        if _old_data.operator_id == current_user.id:
+            _old_data.operator_id = 0
+
+    if new_id != 0:
+        _new_data = TestCaseFile.query.filter_by(id=new_id).first()
+        if _new_data.status == 1 and _new_data.operator_id == 0:
+            _new_data.operator_id = current_user.id
+
+    db.session.commit()
+    return jsonify({'msg': '更新成功', 'status': 1})
+
+
+@api.route('/testCaseFile/uploadFile', methods=['POST'])
+@login_required
+def upload_mind_file():
+    """ 上传mind文件 """
+    id_data = request.form
+    id = id_data.get('id')
+
+    data = request.files
+    file = data['file']
+    suffix = file.filename.split(".")[1]
+    file.save(os.path.join(TEST_FILE_ADDRESS, "{}.{}".format(id, suffix)))
+    res = open_xmind_to_json(id)
+
+    with open('{}{}.txt'.format(TEST_FILE_ADDRESS, id), 'w', encoding='utf-8') as f:
+        f.write(res)
+
+    os.remove('{}{}.xmind'.format(TEST_FILE_ADDRESS, id))
+    os.remove('{}{}.json'.format(TEST_FILE_ADDRESS, id))
+    return jsonify({"msg": "上传成功", "status": 1})

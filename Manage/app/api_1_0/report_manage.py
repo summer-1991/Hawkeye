@@ -99,6 +99,26 @@ def del_report():
         return jsonify({'msg': '删除成功', 'status': 1})
 
 
+@api.route('/report/batchDel', methods=['DELETE'])
+@login_required
+def batchDel_report():
+    try:
+        data = request.json  # 取值
+        if data and len(data) > 0:  # 判断
+            _reports = Report.query.filter(Report.id.in_(set(data))).all()
+            for report in _reports:
+                db.session.delete(report)
+            db.session.commit()
+            for i in data:
+                address = str(i) + '.txt'
+                if os.path.exists(REPORT_ADDRESS + address):
+                    os.remove(REPORT_ADDRESS + address)
+            return jsonify({'msg': '删除成功', 'status': 1})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'msg': '删除失败', 'status': 0})
+
+
 @api.route('/report/find', methods=['POST'])
 @login_required
 def find_report():

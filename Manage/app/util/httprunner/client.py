@@ -187,8 +187,8 @@ class HttpSession(requests.Session):
         response = self._send_request_safe_mode(method, url, **kwargs)
 
         # requests包get响应内容中文乱码解决
-        if response.content:
-            response.encoding = response.apparent_encoding
+        #if response.content:
+            #response.encoding = response.apparent_encoding
 
         response_time_ms = round((time.time() - start_timestamp) * 1000, 2)
 

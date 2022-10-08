@@ -1,18 +1,18 @@
 <template>
     <div class="manualExcel" v-loading="this.loading">
         <div class="hello">
-            <el-card class="box-card"
-                     style="width: 15%;height:90%;position: absolute;margin-top: 0px;margin-left: 0px;z-index: 20"
-                     :body-style="{ padding: '10px' ,height:'100%'}" shadow="always" v-show="showView">
-                <el-button-group style="float: right;">
+            <el-card class="el-card box-card is-always-shadow"
+                     style="width: 20%;height:90%;position: absolute;margin-top: 0px;margin-left: 0px;z-index: 20"
+                     :body-style="{ height: '100%',padding:'0px'}" shadow="always" v-show="showView">
+                <el-button-group style="float: left;">
                     <el-button type="primary" size="mini" @click.native="initTestCaseFile()">新增</el-button>
                     <el-button type="primary" size="mini" @click.native="initEditTestCaseFile()">编辑</el-button>
                     <el-button type="primary" size="mini" @click.native="refreshEditTestCaseFile()">刷新</el-button>
                     <el-button type="danger" size="mini" @click.native="delTestCaseFileBtn">删除</el-button>
                     <el-button type="info" size="mini" @click="showView = false">关闭</el-button>
                 </el-button-group>
-                <hr style="height:1px;border:none;border-top:1px solid rgb(241, 215, 215);margin-top:30px"/>
-                <el-scrollbar>
+                <!--<hr style="height:1px;border:none;border-top:1px solid rgb(241, 215, 215);margin-top:30px"/>-->
+                <el-scrollbar style="width: 100%;height: 80%">
                     <el-tree :data="treeData"
                              :props="defaultProps"
                              @node-click="handleNodeClick"
@@ -78,7 +78,7 @@
         computed: {},
         data() {
             return {
-                showView: false,
+                showView: true,
                 role: '',
                 auth: '',
                 privates: false,
@@ -105,6 +105,10 @@
                 tempTreeData: {
                     data: Object,
                     node: Object,
+                },
+                operatorData: {
+                    oldId: 0,
+                    newId: 0
                 },
                 treeData: [],
             }
@@ -161,7 +165,9 @@
                     'show': show,
                     'data': JSON.stringify(wookData)
                 }).then((response) => {
-                        this.messageShow(this, response)
+                        if (this.messageShow(this, response)) {
+                            this.updateOperator();
+                        }
                     }
                 )
             },
@@ -241,6 +247,8 @@
 
             },
             refreshEditTestCaseFile() {
+                this.operatorData.newId = 0;
+                this.updateOperator();
                 this.findTestCaseFile();
                 this.clearInit();
                 this.initLuckySheet();
@@ -370,6 +378,9 @@
                 if (data.status === 1) {
                     this.getTestCaseFile(data.id)
                 }
+                this.operatorData.newId = data.id;
+                this.updateOperator();
+                this.operatorData.oldId = data.id;
             },
 
             findTestCaseFile() {
@@ -396,13 +407,29 @@
 
                 document.getElementById('excel_name').innerHTML = '';
             },
+            updateOperator() {
+                this.$axios.post(this.$api.updateOperatorApi, {
+                    'oldId': this.operatorData.oldId,
+                    'newId': this.operatorData.newId
+                })
+            },
+            beforeUnloadHandler(e) {
+                this.operatorData.newId = 0;
+                this.updateOperator();
+
+                window.close();
+            },
         },
         watch: {},
         mounted() {
             this.initBaseData();
+            window.addEventListener('beforeunload', e => this.beforeUnloadHandler(e));
         },
         beforeDestroy: function () {
             window.luckysheet.destroy();
+        },
+        destroyed() {
+            window.removeEventListener('beforeunload', e => this.beforeUnloadHandler(e));
         }
     }
 </script>
@@ -424,5 +451,18 @@
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
+    }
+
+    .el-scrollbar__wrap {
+        width: 100%;
+        overflow: auto;
+    }
+
+    .is-horizontal {
+        display: none;
+    }
+
+    .is-vertical {
+        display: none;
     }
 </style>

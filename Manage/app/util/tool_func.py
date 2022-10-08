@@ -1,5 +1,7 @@
 import random
 import datetime
+import xmindparser
+import json
 
 
 def identity_generator():
@@ -29,6 +31,35 @@ def identity_generator():
 
     # 拼接得到完整的18位身份证号
     return ident + key[summation % 11]
+
+
+def open_xmind_to_json(id=None):
+    xmindparser.config = {'showTopicId': True, 'hideEmptyValue': True}
+    xmindparser.xmind_to_json("../test_files/{}.xmind".format(id))
+
+    with open("../test_files/{}.json".format(id), 'r') as load_f:
+        load_dict = json.load(load_f)
+        root_dict = load_dict[0]['topic']
+        root_dict = xmind_children(root_dict)
+        root = {"root": root_dict}
+
+    return json.dumps(root)
+
+
+def xmind_children(dict_temp=None):
+    if dict_temp is not None and isinstance(dict_temp, dict):
+        temp_dict = {"data": {}}
+        temp_list = []
+
+        temp_dict['data']['text'] = dict_temp['title']
+
+        if 'topics' in dict_temp:
+            for obj in dict_temp['topics']:
+                temp_list.append(xmind_children(obj))
+
+        temp_dict['children'] = temp_list
+        dict_temp = temp_dict
+    return dict_temp
 
 
 class TraverseDict(object):

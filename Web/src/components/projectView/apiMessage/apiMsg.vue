@@ -31,17 +31,17 @@
                 </el-select>
             </el-form-item>
 
-            <el-form-item label="接口名称" v-if="numTab !== 'third'">
-                <el-input placeholder="请输入" v-model="form.apiName" clearable style="width: 150px">
-                </el-input>
-            </el-form-item>
+            <!--<el-form-item label="接口名称" v-if="numTab !== 'third'">-->
+            <!--<el-input placeholder="请输入" v-model="form.apiName" clearable style="width: 150px">-->
+            <!--</el-input>-->
+            <!--</el-form-item>-->
             <!--<el-form-item label="套件名称" v-if="numTab === 'third'">-->
             <!--<el-input placeholder="请输入" v-model="form.suiteName" clearable>-->
             <!--</el-input>-->
             <!--</el-form-item>-->
 
             <el-form-item>
-                <el-button type="primary" icon="el-icon-search" @click.native="handleCurrentChange(1)">搜索</el-button>
+                <!--<el-button type="primary" icon="el-icon-search" @click.native="handleCurrentChange(1)">搜索</el-button>-->
                 <el-button type="primary" @click.native="initData()" v-if="role == '2' || auth.api_api_add">录入接口信息
                 </el-button>
                 <el-button type="primary" @click.native="apiTest(apiMsgList)" v-if="role == '2' || auth.api_api_run">
@@ -55,6 +55,14 @@
                            v-if="form.configId !== null && form.configId !== '' "
                            @click.native="$refs.configEditFunc.editSceneConfig(form.configId)">配置修改
                 </el-button>
+            </el-form-item>
+
+            <el-form-item style="float: right;">
+                <el-input placeholder="请输入接口名称/地址查询" v-model="form.apiName" clearable style="width: 200px"></el-input>
+                <el-tooltip class="item" effect="dark" content="模糊搜索" placement="bottom-end">
+                    <el-button type="primary" icon="el-icon-search" @click.native="handleCurrentChange(val)">全局搜索
+                    </el-button>
+                </el-tooltip>
             </el-form-item>
         </el-form>
         <el-tabs v-model="numTab" class="table_padding" @tab-click="tabChange">
@@ -192,7 +200,6 @@
                         :configData="form.config"
                         :proAndIdData="proAndIdData"
                         :proModelData="proModelData"
-                        :proUrlData="proUrlData"
                         :baseUrlData="baseUrlData"
                         :clientList="clientList"
                         @findApiMsg="findApiMsg"
@@ -253,7 +260,6 @@
             apiEdit: apiEdit,
             errorView: errorView,
             configEdit: configEdit,
-
         },
         name: 'caseManage',
         data() {
@@ -264,7 +270,6 @@
                 proAndIdData: Array(),  //  项目名称和id的数据
                 proModelData: Object(),  //  项目对应的模块数据
                 configData: Object(),  //  项目对应的配置数据
-                proUrlData: Array(),  //  项目对应的环境url数据
                 baseUrlData: Array(),
                 ApiMsgTableData: Array(),   //  接口表单数据
                 apiMsgList: Array(),    //  临时存储接口数据
@@ -311,14 +316,14 @@
             initBaseData() {
                 this.role = this.$store.state.roles;
                 this.auth = JSON.parse(this.$store.state.auth);
+                this.form.apiName = null;
 
                 //  初始化页面所需要的数据
                 this.$axios.get(this.$api.baseDataApi).then((response) => {
                         this.proAndIdData = response.data['pro_and_id'];
                         this.configData = response.data['config_name_list'];
-                        this.proUrlData = response.data['urlData'];
                         this.proModelData = response.data['data'];
-                        this.baseUrlData = response.data['baseUrlData']
+                        this.baseUrlData = response.data['baseUrlData'];
                         if (response.data['user_pros']) {
                             this.form.projectId = this.proAndIdData[0].id;
 
@@ -463,6 +468,7 @@
             initProjectChoice() {
                 //  当项目选择项改变时，初始化模块和配置的数据
                 this.form.configId = null;
+                this.form.apiName = null;
                 this.form.module = {name: null, moduleId: null,};
                 this.modulePage.currentPage = 1;
                 this.apiMsgPage.currentPage = 1;
@@ -506,6 +512,7 @@
                 let index = this.moduleDataList.map(item => item.moduleId).indexOf(data['moduleId']);  //  获取当前节点的下标
                 this.form.module = this.moduleDataList[index];
                 this.apiMsgPage.currentPage = 1;
+                this.form.apiName = null;
                 this.findApiMsg();
             },
             handleModuleCurrentChange(val) {

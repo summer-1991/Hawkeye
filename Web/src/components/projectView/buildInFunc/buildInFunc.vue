@@ -26,31 +26,34 @@
                 <!--</el-form-item>-->
             </el-form-item>
             <el-form-item>
-                <el-button type="primary" @click.native="checkFunc()" size="small"
-                           v-if="role == '2' || auth.api_func_run">调试
-                </el-button>
+                <el-tooltip content="亲!只调试,不保存哦" placement="top-start" v-if="role == '2' || auth.api_func_run">
+                    <el-button type="primary" @click.native="checkFunc()" size="small">调试</el-button>
+                </el-tooltip>
             </el-form-item>
             <el-form-item>
                 <el-button-group>
                     <!--<el-tooltip content="检查语法" placement="top-start">-->
                     <!--<el-button type="primary" icon="el-icon-view" @click.native="checkFunc()" size="small"></el-button>-->
                     <!--</el-tooltip>-->
-                    <el-tooltip content="重置文档" placement="top-start">
-                        <el-button type="info"
-                                   icon="el-icon-refresh"
-                                   @click.native="findFunc()"
-                                   size="small">
-
-                        </el-button>
+                    <el-tooltip content="重新读取文档内容" placement="top-start">
+                        <el-button type="info" @click.native="findFunc()" size="small">重置</el-button>
                     </el-tooltip>
                     <el-tooltip content="保存文档" placement="top-start" v-if="role == '2' || auth.api_func_save">
-                        <el-button type="success" icon="el-icon-document"
-                                   @click.native="saveFunc()"
-                                   size="small">
-
-                        </el-button>
+                        <el-button type="success" @click.native="saveFunc()" size="small">保存</el-button>
                     </el-tooltip>
                 </el-button-group>
+            </el-form-item>
+            <el-form-item>
+                <el-upload
+                        :file-list="fileList"
+                        class="upload-demo"
+                        :before-upload="beforeUpload"
+                        :on-success="onSuccess"
+                        action="/api/func/uploadFile">
+                    <el-tooltip class="item" effect="dark" content="文件不超过10M" placement="top-start">
+                        <el-button size="small" type="warning">点击上传</el-button>
+                    </el-tooltip>
+                </el-upload>
             </el-form-item>
         </el-form>
         <el-row>
@@ -78,7 +81,7 @@
                 <!--height="810px">-->
                 <!--</codemirror>-->
             </el-col>
-            <el-col :span="8" style="padding-left:10px;background-color: rgb(234, 234, 234);height:790px ">
+            <el-col :span="8" style="padding-left:10px;background-color: rgb(234, 234, 234);height:790px;overflow:auto">
                 <div style="font-weight: 700;color: gray;font-size:14px;margin-top: 2px;">
                     测试结果：
                 </div>
@@ -104,6 +107,7 @@
                 result: '',
                 role: '',
                 auth: '',
+                fileList: [],
             }
         },
         methods: {
@@ -125,6 +129,24 @@
                         }
                     }
                 )
+            },
+            //上传前检查文件大小
+            beforeUpload(file) {
+                const isLt10M = file.size / 1024 / 1024 < 10;
+                if (!isLt10M) {
+                    this.$message({
+                        message: '请检查，上传文件大小不能超过10MB!',
+                        type: 'error'
+                    });
+                    return false;
+                }
+            },
+            onSuccess(response) {
+                this.fileList = [];
+                this.$message({
+                    message: response.msg,
+                    type: 'success'
+                });
             },
             removeFunc() {
                 this.$axios.post('/apiMessage/apiMessage/func/remove', {'funcName': this.comparator}).then((response) => {
@@ -168,19 +190,20 @@
                     });
                     return
                 }
-                this.$axios.post(this.$api.saveFuncApi, {
-                    'funcData': this.funcData,
-                    'funcName': this.comparator
-                }).then(() => {
-                        this.$axios.post(this.$api.checkFuncApi, {
-                            'funcFileName': this.comparator,
-                            'funcName': this.funcName,
-                        }).then((response) => {
-                                this.messageShow(this, response);
-                                this.result = response['data']['result'];
-                                // this.messageShow(this, response);
-                            }
-                        )
+                // this.$axios.post(this.$api.saveFuncApi, {
+                //     'funcData': this.funcData,
+                //     'funcName': this.comparator
+                // }).then(() => {
+                //
+                //     }
+                // )
+                this.$axios.post(this.$api.checkFuncApi, {
+                    'funcFileName': this.comparator,
+                    'funcName': this.funcName,
+                }).then((response) => {
+                        this.messageShow(this, response);
+                        this.result = response['data']['result'];
+                        // this.messageShow(this, response);
                     }
                 )
             },
@@ -217,8 +240,8 @@
 </script>
 
 <style>
-
-
-
+    .upload-demo {
+        display: inline-flex;
+    }
 
 </style>

@@ -1,6 +1,7 @@
 import ast
 import json
 import types
+import re
 from app.models import *
 from .httprunner.api import HttpRunner
 from ..util.global_variable import *
@@ -13,28 +14,14 @@ from flask.json import JSONEncoder
 class RunCase(object):
     def __init__(self, project_ids=None):
         self.project_ids = project_ids
-        self.pro_environment = None
         self.pro_base_url = None
         self.new_report_id = None
-        self.gm_url = None
         self.TEST_DATA = {'testcases': [], 'project_mapping': {'functions': {}, 'variables': {}}}
         self.init_project_data()
 
     def init_project_data(self):
         pro_data = Project.query.filter_by(id=self.project_ids).first()
-        self.pro_base_url = [json.loads(pro_data.host), json.loads(pro_data.host_two), json.loads(pro_data.host_three),
-                             json.loads(pro_data.host_four), json.loads(pro_data.host_five),
-                             json.loads(pro_data.host_six)]
-        # for pro_data in Project.query.all():
-        if pro_data.environment_choice == 'first':
-            self.pro_environment = json.loads(pro_data.host)
-        elif pro_data.environment_choice == 'second':
-            self.pro_environment = json.loads(pro_data.host_two)
-        if pro_data.environment_choice == 'third':
-            self.pro_environment = json.loads(pro_data.host_three)
-        if pro_data.environment_choice == 'fourth':
-            self.pro_environment = json.loads(pro_data.host_four)
-        # self.pro_base_url = pro_base_url
+        self.pro_base_url = json.loads(pro_data.host)
         self.pro_config(Project.query.filter_by(id=self.project_ids).first())
 
     def pro_config(self, project_data):
@@ -55,8 +42,22 @@ class RunCase(object):
                                      if isinstance(item, types.FunctionType)}
             self.TEST_DATA['project_mapping']['functions'].update(module_functions_dict)
 
+    def update_gm_url(self, select_url=None, gm_url_temp=None):
+        if gm_url_temp is not None and len(gm_url_temp) > 0:
+            return gm_url_temp
+
+        gm_url = "http://api-test.papegames.com:12102"
+        regular = re.compile(r'[a-zA-Z]+://(.*):[0-9]+')
+        l1 = re.findall(regular, gm_url)
+        l2 = re.findall(regular, select_url)
+
+        if l1 != l2:
+            gm_url = gm_url.replace(l1[0], l2[0])
+
+        return gm_url
+
     def assemble_step(self, api_id=None, step_data=None, pro_base_url=None, status=False, case_url_flag=None,
-                      client_id=None):
+                      client_id=None, gm_url_temp=None):
         """
         :param api_id:
         :param step_data:
@@ -64,6 +65,7 @@ class RunCase(object):
         :param status: 判断是接口调试(false)or业务用例执行(true)
         :param case_url_flag:判断是否直接到url,不需要环境
         :param client_id:传递租户的id
+        :param gm_url_temp:传递待替换的gm_url
         :return:
         """
         if status:
@@ -90,10 +92,10 @@ class RunCase(object):
             if case_url_flag == 1 or case_url_flag is None:
                 pro_env_url = pro_base_url[api_data.environment]
                 _data['request']['url'] = pro_env_url[int(api_data.status_url)] + api_data.url.split('?')[0]
-            elif api_data.environment >= 3:
-                _data['request']['url'] = self.gm_url[int(api_data.status_url)] + api_data.url.split('?')[0]
             else:
                 pro_env_url = pro_base_url
+                if 'gm' in api_data.environment:
+                    pro_env_url = self.update_gm_url(pro_env_url, gm_url_temp)
                 _data['request']['url'] = pro_env_url + api_data.url.split('?')[0]
         else:
             _data['request']['url'] = api_data.url
@@ -181,10 +183,9 @@ class RunCase(object):
         _data['request']['params'] = {param['key']: param['value'].replace('%', '&') for param in
                                       _param if param.get('key')} if _param else {}
 
-        if api_data.sig != -1:
-            if 'clientid' not in _data['request']['params']:
-                _data['request']['params']['clientid'] = api_data.client
-            _data['request']['params']['need_sig'] = 1
+        _data['need_sig'] = api_data.sig
+        if len(api_data.client) != 0 and ('clientid' not in _data['request']['params']):
+            _data['request']['params']['clientid'] = api_data.client
 
         _data['request']['headers'] = {headers['key']: headers['value'].replace('%', '&') for headers in
                                        _header if headers.get('key')} if _header else {}
@@ -239,8 +240,14 @@ class RunCase(object):
                                in api_ids]
         self.TEST_DATA['testcases'].append(_steps)
 
-    def get_case_test(self, case_ids, job_env=None, job_url_index=None, job_client=None):
+    def get_case_test(self, case_ids, job_env=None, job_url_index=None, job_client=None, job_gm=None,
+                      task_variable=None):
         scheduler.app.logger.info('本次测试的用例id：{}'.format(case_ids))
+        if task_variable:
+            task_variable = json.loads(task_variable)
+            for k in task_variable:
+                self.TEST_DATA['project_mapping']['variables'][k] = task_variable[k]
+
         for case_id in case_ids:
             case_data = Case.query.filter_by(id=case_id).first()
             case_times = case_data.times if case_data.times else 1
@@ -248,14 +255,17 @@ class RunCase(object):
             env_temp = case_data.environment
             url_temp = int(case_data.status_url)
             client_id = case_data.client
+            gm_url_temp = case_data.gm
             if job_env is not None:
                 env_temp = job_env
             if job_url_index is not None:
                 url_temp = job_url_index
             if job_client is not None:
                 client_id = job_client
+            if job_gm is not None:
+                gm_url_temp = job_gm
 
-            if env_temp == -1 or env_temp is None:
+            if env_temp is None or len(env_temp) == 0:
                 url_environment = self.pro_base_url
                 # 没有选择环境
                 case_url_flag = 1
@@ -264,15 +274,11 @@ class RunCase(object):
                 # 选择了环境
                 case_url_flag = 2
 
-            if env_temp is None or env_temp == 0:
+            # 设置全局环境变量
+            if env_temp is None or len(env_temp) == 0:
                 global_env = 'test'
-                self.gm_url = self.pro_base_url[3]
-            elif env_temp == 1:
-                global_env = 'activitytest'
-                self.gm_url = self.pro_base_url[4]
             else:
-                global_env = 'test'
-                self.gm_url = self.pro_base_url[4]
+                global_env = env_temp
 
             for s in range(case_times):
                 _steps = {'teststeps': [], 'config': {'variables': {}, 'name': ''}}
@@ -290,7 +296,8 @@ class RunCase(object):
                 for _step in CaseData.query.filter_by(case_id=case_id).order_by(CaseData.num.asc()).all():
                     if _step.status == 'true':  # 判断用例状态，是否执行
                         _steps['teststeps'].append(
-                            self.assemble_step(None, _step, url_environment, True, case_url_flag, client_id))
+                            self.assemble_step(None, _step, url_environment, True, case_url_flag, client_id,
+                                               gm_url_temp))
                 self.TEST_DATA['testcases'].append(_steps)
 
     def build_report(self, jump_res, task_name, performer):

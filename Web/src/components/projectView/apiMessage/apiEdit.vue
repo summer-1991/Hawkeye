@@ -33,10 +33,10 @@
                            style="width: 200px;padding-right:10px"
                            @change="changeEnvChoice">
                     <el-option
-                            v-for="item in environmentList"
-                            :key="item"
+                            v-for="(item,key) in environmentList"
+                            :key="key"
                             :label="item"
-                            :value="item"
+                            :value="key"
                     >
                     </el-option>
                 </el-select>
@@ -75,7 +75,7 @@
             <el-form-item label="ClientID" prop="name" labelWidth="80px" style="margin-bottom: 5px">
                 <el-select v-model="apiMsgData.clientId"
                            filterable size="small"
-                           style="width: 200px;">
+                           style="width: 200px;" clearable @clear="clearClient">
                     <el-option
                             v-for="(item) in clientList"
                             :key="item"
@@ -447,7 +447,7 @@
             errorView: errorView,
         },
         name: 'apiEdit',
-        props: ['proAndIdData', 'projectId', 'proUrlData', 'configData', 'proModelData', 'moduleId', 'baseUrlData', 'clientList'],
+        props: ['proAndIdData', 'projectId', 'configData', 'proModelData', 'moduleId', 'baseUrlData', 'clientList'],
         data() {
             return {
                 bodyShow: 'second',
@@ -494,7 +494,13 @@
                     sig: '',
                     clientId: "1012",
                 },
-                environmentList: ['测试环境', '预发环境', '灰度/正式环境', 'GM测试', 'GM预发'],
+                environmentList: {
+                    testPre: "测试预发",
+                    test: "测试",
+                    pre: "预发",
+                    pro: "灰度/正式",
+                    gm: "GM"
+                },
                 sigList: ['clientid_时间戳_md5'],
                 currentUrlData: Array(),
                 apiRequestData: Object(),
@@ -514,18 +520,16 @@
                 //  改变项目选项时，清空模块和基础url的选择
                 this.form.moduleId = '';
                 this.form.choiceUrl = '';
-                var index = this.environmentList.indexOf(this.apiMsgData.environment);
-                if (index != -1) {
-                    this.currentUrlData = this.baseUrlData[this.form.projectId][index];
+                if (this.apiMsgData.environment.length != 0) {
+                    this.currentUrlData = this.baseUrlData[this.form.projectId][this.apiMsgData.environment];
                 }
             },
             changeEnvChoice() {
                 this.currentUrlData = Array();
                 if (this.form.projectId != null) {
                     this.form.choiceUrl = '';
-                    var index = this.environmentList.indexOf(this.apiMsgData.environment);
-                    if (index != -1) {
-                        this.currentUrlData = this.baseUrlData[this.form.projectId][index];
+                    if (this.apiMsgData.environment.length != 0) {
+                        this.currentUrlData = this.baseUrlData[this.form.projectId][this.apiMsgData.environment];
                     }
                 }
             },
@@ -642,8 +646,7 @@
                     'projectId': this.form.projectId,
                     'apiMsgName': this.apiMsgData.name,
                     'num': this.apiMsgData.num,
-                    // 'choiceUrl': this.form.choiceUrl,
-                    'environment': this.environmentList.indexOf(this.apiMsgData.environment),
+                    'environment': this.apiMsgData.environment,
                     'clientId': this.apiMsgData.clientId,
                     'sig': this.sigList.indexOf(this.apiMsgData.sig),
                     'choiceUrl': this.currentUrlData.indexOf(this.form.choiceUrl),
@@ -717,17 +720,19 @@
                         this.apiMsgData.extract = response.data['data']['extract'];
                         this.apiMsgData.validate = response.data['data']['validate'];
                         this.apiMsgData.method = response.data['data']['method'];
-                        this.apiMsgData.environment = this.environmentList[response.data['data']['environment']];
+                        this.apiMsgData.environment = response.data['data']['environment'];
                         this.apiMsgData.clientId = response.data['data']['client'];
                         this.apiMsgData.sig = this.sigList[response.data['data']['sig']];
 
                         this.currentUrlData = Array();
-                        if (response.data['data']['environment'] != -1) {
+                        if (this.apiMsgData.environment.length != 0) {
                             this.currentUrlData = this.baseUrlData[this.projectId][response.data['data']['environment']];
                         }
                         this.form.choiceUrl = this.currentUrlData[response.data['data']['status_url']];
-                        this.form.projectId = this.projectId;
-                        this.form.moduleId = this.moduleId;
+                        //this.form.projectId = this.projectId;
+                        //this.form.moduleId = this.moduleId;
+                        this.form.moduleId = response.data['data']['module_id'];
+                        this.form.projectId = response.data['data']['project_id'];
                     }
                 );
             },
@@ -739,7 +744,7 @@
                 this.apiRequestData['name'] = this.apiMsgData.name;
                 this.apiRequestData['desc'] = this.apiMsgData.desc;
                 this.apiRequestData['variableType'] = this.form.choiceType;
-                this.apiRequestData['environment'] = this.environmentList.indexOf(this.apiMsgData.environment);
+                this.apiRequestData['environment'] = this.apiMsgData.environment;
                 this.apiRequestData['statusUrl'] = this.currentUrlData.indexOf(this.form.choiceUrl);
                 this.apiRequestData['upFunc'] = this.apiMsgData.upFunc;
                 this.apiRequestData['downFunc'] = this.apiMsgData.downFunc;
@@ -819,6 +824,11 @@
                     this.apiMsgData.param.push({key: null, value: null});
                 }
             },
+            clearClient() {
+                if (this.apiMsgData.clientId.length == 0) {
+                    this.apiMsgData.sig = '';
+                }
+            }
         }
         ,
         computed: {

@@ -78,7 +78,7 @@ class HttpRunner(object):
                     # suppose one testcase should not have more than 9999 steps,
                     # and one step should not run more than 999 times.
                     test_method_name = 'test_{:04}_{:03}'.format(index, times_index)
-                    test_dict['variables']['IT'] = times_index
+                    #test_dict['variables']['IT'] = times_index
                     test_method = _add_test(test_runner, test_dict)
                     setattr(TestSequense, test_method_name, test_method)
 

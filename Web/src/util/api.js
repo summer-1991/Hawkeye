@@ -8,6 +8,7 @@ const delProApi = '/api/project/del';
 
 const findReportApi = '/api/report/find';
 const delReportApi = '/api/report/del';
+const batchDelReportApi = '/api/report/batchDel';
 
 const findModuleApi = '/api/module/find';
 const addModuleApi = '/api/module/add';
@@ -78,11 +79,13 @@ const findTestCaseFileApi = '/api/testCaseFile/find';
 const delTestCaseFileApi = '/api/testCaseFile/del';
 const getTestCaseFileApi = '/api/testCaseFile/get';
 const saveTestCaseFileApi = '/api/testCaseFile/save';
+const updateOperatorApi = '/api/testCaseFile/update';
 
 const findCommonConfigApi = '/api/commonConfig/find';
 const editCommonConfigApi = '/api/commonConfig/edit';
 const delCommonConfigApi = '/api/commonConfig/del';
 const addCommonConfigApi = '/api/commonConfig/add';
+const batchDelClientApi = '/api/commonConfig/batchDel';
 
 const findWikiApi = '/api/wiki/find';
 const delWikiAnnexApi = '/api/wiki/annex';
@@ -90,6 +93,8 @@ const delWikiApi = '/api/wiki/del';
 const addWikiApi = '/api/wiki/add';
 const editAndCopyWikiApi = '/api/wiki/edit';
 const checkWikiAnnexApi = '/api/wiki/check';
+const moveUpWikiApi = '/api/wiki/moveUp';
+const moveDownWikiApi = '/api/wiki/moveDown';
 
 const findManualCaseApi = '/api/manual/findBySet';
 const addManualCaseApi = '/api/manual/add';
@@ -118,6 +123,7 @@ export default {
     delTestCaseFileApi,
     getTestCaseFileApi,
     saveTestCaseFileApi,
+    updateOperatorApi,
 
     baseDataApi,
     getFuncAddressApi,
@@ -130,6 +136,7 @@ export default {
 
     findReportApi,
     delReportApi,
+    batchDelReportApi,
 
     findFuncApi,
     createFuncApi,
@@ -197,6 +204,7 @@ export default {
     editCommonConfigApi,
     delCommonConfigApi,
     addCommonConfigApi,
+    batchDelClientApi,
 
     findWikiApi,
     editAndCopyWikiApi,
@@ -204,6 +212,8 @@ export default {
     addWikiApi,
     delWikiAnnexApi,
     checkWikiAnnexApi,
+    moveUpWikiApi,
+    moveDownWikiApi,
 
     findManualCaseApi,
     editAndCopyManualCaseApi,

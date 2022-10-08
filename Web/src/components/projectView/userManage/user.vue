@@ -25,12 +25,16 @@
                     </el-table-column>
                     <el-table-column
                             prop="userName"
-                            label="用户名称"
-                            width="150">
+                            label="用户名称">
+                    </el-table-column>
+                    <el-table-column
+                            prop="userRole"
+                            label="用户角色">
                     </el-table-column>
                     <el-table-column
                             prop="status"
-                            label="状态">
+                            label="状态"
+                            width="150">
                         <template slot-scope="scope">
                             <el-tag size="small" :type="scope.row.status === 1 ? 'success' : 'danger'">
                                 {{statusChineseShow(scope.row.status)}}

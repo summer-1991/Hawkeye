@@ -5,6 +5,7 @@ from app.util.case_change.core import HarParser
 from . import api, login_required
 from ..util.http_run import RunCase
 from ..util.utils import *
+from sqlalchemy import or_
 
 
 @api.route('/apiMsg/add', methods=['POST'])
@@ -125,7 +126,7 @@ def edit_api_msg():
              'variable': json.loads(_edit.variable),
              'json_variable': _edit.json_variable,
              'extract': json.loads(_edit.extract),
-             'validate': json.loads(_edit.validate)}
+             'validate': json.loads(_edit.validate), 'module_id': _edit.module_id, 'project_id': _edit.project_id}
     return jsonify({'data': _data, 'status': 1})
 
 
@@ -193,7 +194,9 @@ def find_api_msg():
         return jsonify({'msg': '请先在当前项目下创建模块', 'status': 0})
 
     if api_name:
-        _data = ApiMsg.query.filter_by(module_id=module_id).filter(ApiMsg.name.like('%{}%'.format(api_name)))
+        _data = ApiMsg.query.filter_by(project_id=project_id).filter(
+            or_(ApiMsg.name.like('%{}%'.format(api_name)), ApiMsg.url.like('%{}%'.format(api_name))))
+
         # total = len(api_data)
         if not _data:
             return jsonify({'msg': '没有该接口信息', 'status': 0})

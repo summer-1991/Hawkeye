@@ -80,11 +80,13 @@
                             </el-table-column>
                             <el-table-column
                                     prop="create_by"
-                                    label="创建人">
+                                    label="创建人"
+                                    width="80">
                             </el-table-column>
                             <el-table-column
                                     prop="update_time"
-                                    label="最近更新">
+                                    label="最近更新"
+                                    width="180">
                             </el-table-column>
                             <el-table-column
                                     label="操作">
@@ -102,6 +104,12 @@
                                                @click.native="sureView(delApi,wikiTableData[scope.$index]['wikiId'],wikiTableData[scope.$index]['name'])"
                                                v-if="role == '2' || auth.others_wiki_del">
                                         删除
+                                    </el-button>
+                                    <el-button size="mini" type="primary" icon="el-icon-arrow-up"
+                                               @click.native="moveUp(wikiTableData[scope.$index]['wikiId'])">
+                                    </el-button>
+                                    <el-button size="mini" type="primary" icon="el-icon-arrow-down"
+                                               @click.native="moveDown(wikiTableData[scope.$index]['wikiId'])">
                                     </el-button>
                                 </template>
                             </el-table-column>
@@ -333,6 +341,55 @@
                     }
                 )
             },
+            moveUp(wikiId) {
+                //上移
+                var datas = this.wikiTableData
+                if (wikiId === datas[0].wikiId) {
+                    this.$message({
+                        showClose: true,
+                        message: '已经是第一个，不能再移动了',
+                        type: 'warning',
+                    });
+                    return
+                }
+                for (let i = 0; i < datas.length; i++) {
+                    if (wikiId === datas[i].wikiId) {
+                        this.$axios.post(this.$api.moveUpWikiApi, {
+                            'curWikiId': wikiId,
+                            'preWikiId': datas[i-1].wikiId
+                        }).then((response) => {
+                                this.messageShow(this, response);
+                                this.findWiki();
+                            }
+                        )
+                    }
+                }
+            },
+            moveDown(wikiId){
+                //下移
+                var datas = this.wikiTableData
+                if (wikiId === datas[datas.length-1].wikiId) {
+                    this.$message({
+                        showClose: true,
+                        message: '已经是最后一个，不能再移动了',
+                        type: 'warning',
+                    });
+                    return
+                }
+                for(let i = 0;i < datas.length;i++){
+                    if(wikiId === datas[i].wikiId) {
+                        this.$axios.post(this.$api.moveDownWikiApi,{
+                                'curWikiId': wikiId,
+                                'afterWikiId':datas[i+1].wikiId
+                            }).then((response) => {
+                                this.messageShow(this, response);
+                                this.findWiki();
+                            }
+                        )
+                    }
+                }
+            },
+
             findModule() {
                 //  查询接口模块
                 this.$axios.post(this.$api.findModuleApi, {
